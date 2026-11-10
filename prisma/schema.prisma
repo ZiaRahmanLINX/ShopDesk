@@ -1,0 +1,431 @@
+// ShopDesk — Prisma schema (SQLite).
+// MONEY: every amount is an integer number of PAISA (PKR x 100). Never float money.
+// QUANTITY: Float (kg / litre need decimals). Prices/costs: Int paisa.
+
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "windows"]
+  // Generated into the app source (not node_modules/.prisma) so the
+  // packaged app can ship it: electron-builder skips dot-directories in
+  // node_modules, which left the client out of the bundle entirely.
+  output        = "../src/main/generated-prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ---------- Users & roles ----------
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  username     String   @unique
+  passwordHash String
+  role         String   @default("WORKING_PARTNER") // ADMIN | WORKING_PARTNER
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  auditLogs    AuditLog[]
+}
+
+// ---------- Partners ----------
+model Partner {
+  id             String              @id @default(cuid())
+  name           String
+  type           String              // CAPITAL | WORKING
+  phone          String?
+  profitSharePct Int                 @default(50)
+  capitalBalance Int                 @default(0) // paisa, denormalised, maintained transactionally
+  loanBalance    Int                 @default(0) // paisa owed BY business TO partner
+  isActive       Boolean             @default(true)
+  createdAt      DateTime            @default(now())
+  capitals       PartnerCapital[]
+  loans          PartnerLoan[]
+  withdrawals    PartnerWithdrawal[]
+  distributions  ProfitDistribution[]
+}
+
+model PartnerCapital {
+  id        String   @id @default(cuid())
+  partnerId String
+  partner   Partner  @relation(fields: [partnerId], references: [id])
+  kind      String   // INITIAL | ADDITIONAL
+  amount    Int // paisa, always positive
+  date      DateTime @default(now())
+  note      String?
+  cashAccountId String?
+  createdAt DateTime @default(now())
+}
+
+model PartnerLoan {
+  id           String   @id @default(cuid())
+  partnerId    String
+  partner      Partner  @relation(fields: [partnerId], references: [id])
+  amount       Int // paisa borrowed by business
+  repaidAmount Int      @default(0)
+  status       String   @default("OPEN") // OPEN | PARTIAL | REPAID
+  date         DateTime @default(now())
+  note         String?
+  cashAccountId String?
+  createdAt    DateTime @default(now())
+}
+
+model PartnerWithdrawal {
+  id            String   @id @default(cuid())
+  partnerId     String
+  partner       Partner  @relation(fields: [partnerId], references: [id])
+  amount        Int // paisa, always positive (NOT an expense)
+  date          DateTime @default(now())
+  note          String?
+  cashAccountId String?
+  approvedById  String?
+  createdAt     DateTime @default(now())
+}
+
+// ---------- Catalogue ----------
+model Category {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  products  Product[]
+}
+
+model Supplier {
+  id              String          @id @default(cuid())
+  name            String
+  phone           String?
+  address         String?
+  openingPayable  Int             @default(0) // paisa
+  currentPayable  Int             @default(0) // paisa, >0 means business owes supplier
+  createdAt       DateTime        @default(now())
+  purchases       Purchase[]
+  ledger          SupplierLedger[]
+  payments        Payment[]       @relation("SupplierPayments")
+}
+
+model Product {
+  id            String          @id @default(cuid())
+  name          String
+  sku           String          @unique
+  barcode       String?
+  categoryId    String?
+  category      Category?       @relation(fields: [categoryId], references: [id])
+  brand         String?
+  purchasePrice Int // paisa, latest purchase cost (reference only — history kept in lots)
+  sellingPrice  Int // paisa
+  qty           Float           @default(0)
+  minQty        Float           @default(0)
+  unit          String          @default("piece") // piece | packet | kg | litre | box
+  supplierId    String?
+  description   String?
+  imagePath     String?
+  isActive      Boolean         @default(true)
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  lots          PurchaseLot[]
+  movements     StockMovement[]
+  purchaseItems PurchaseItem[]
+  saleItems     SaleItem[]
+}
+
+// ---------- Stock ----------
+model PurchaseLot {
+  id           String   @id @default(cuid())
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id])
+  purchaseId   String
+  purchase     Purchase @relation(fields: [purchaseId], references: [id])
+  qtyRemaining Float
+  unitCost     Int // paisa per unit, frozen at purchase time — never rewritten
+  createdAt    DateTime @default(now())
+
+  @@index([productId, createdAt])
+}
+
+model StockMovement {
+  id         String   @id @default(cuid())
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  type       String // PURCHASE | SALE | RETURN_CUSTOMER | RETURN_SUPPLIER | ADJUSTMENT | DAMAGE | EXPIRED
+  qtyChange  Float // signed
+  unitCost   Int? // paisa, for valuation of the movement
+  refType    String? // PURCHASE | SALE | ADJUSTMENT | ...
+  refId      String?
+  note       String?
+  createdById String?
+  createdAt  DateTime @default(now())
+
+  @@index([productId, createdAt])
+}
+
+// ---------- Purchases ----------
+model Purchase {
+  id            String         @id @default(cuid())
+  supplierId    String
+  supplier      Supplier       @relation(fields: [supplierId], references: [id])
+  invoiceNo     String         @unique
+  date          DateTime       @default(now())
+  subtotal      Int // paisa
+  discount      Int            @default(0)
+  transport     Int            @default(0)
+  total         Int // paisa = subtotal - discount + transport
+  paidAmount    Int            @default(0)
+  paymentMethod String         @default("CASH") // CASH | BANK | EASYPAISA | JAZZCASH | CREDIT | SPLIT
+  fundingSource String         @default("BUSINESS_CASH") // BUSINESS_CASH | PARTNER_CAPITAL | PARTNER_LOAN | SUPPLIER_CREDIT
+  partnerId     String?
+  loanId        String?
+  cashAccountId String?
+  status        String         @default("UNPAID") // PAID | PARTIAL | UNPAID
+  note          String?
+  createdById   String?
+  createdAt     DateTime       @default(now())
+  items         PurchaseItem[]
+  lots          PurchaseLot[]
+}
+
+model PurchaseItem {
+  id         String   @id @default(cuid())
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id])
+  productId  String
+  product    Product  @relation(fields: [productId], references: [id])
+  qty        Float
+  unitCost   Int // paisa, frozen
+  lineTotal  Int // paisa
+}
+
+// ---------- Sales / POS ----------
+model Customer {
+  id             String           @id @default(cuid())
+  name           String
+  phone          String?
+  address        String?
+  openingBalance Int              @default(0) // paisa owed by customer at creation
+  currentBalance Int              @default(0) // paisa, >0 means customer owes us
+  createdAt      DateTime         @default(now())
+  sales          Sale[]
+  ledger         CustomerLedger[]
+  payments       Payment[]        @relation("CustomerPayments")
+}
+
+model Sale {
+  id            String     @id @default(cuid())
+  invoiceNo     String     @unique
+  date          DateTime   @default(now())
+  customerId    String?
+  customer      Customer?  @relation(fields: [customerId], references: [id])
+  subtotal      Int // paisa
+  discount      Int        @default(0)
+  total         Int // paisa
+  paidAmount    Int        @default(0)
+  changeGiven   Int        @default(0)
+  paymentMethod String     @default("CASH") // CASH | BANK | EASYPAISA | JAZZCASH | CREDIT | SPLIT
+  cogs          Int        @default(0) // paisa, FIFO cost of goods sold
+  grossProfit   Int        @default(0) // paisa = total - cogs (discount already in total)
+  status        String     @default("COMPLETED") // COMPLETED | REFUNDED | CANCELLED
+  cashAccountId String?
+  note          String?
+  createdById   String?
+  createdAt     DateTime   @default(now())
+  items         SaleItem[]
+  payments      SalePayment[]
+  invoice       Invoice?
+}
+
+model SaleItem {
+  id         String  @id @default(cuid())
+  saleId     String
+  sale       Sale    @relation(fields: [saleId], references: [id])
+  productId  String
+  product    Product @relation(fields: [productId], references: [id])
+  qty        Float
+  unitPrice  Int // paisa, frozen selling price at sale time
+  unitCost   Int // paisa, FIFO cost at sale time
+  lineTotal  Int // paisa
+  discount   Int     @default(0)
+}
+
+model SalePayment {
+  id            String  @id @default(cuid())
+  saleId        String
+  sale          Sale    @relation(fields: [saleId], references: [id])
+  method        String // CASH | BANK | EASYPAISA | JAZZCASH | CREDIT
+  amount        Int // paisa
+  cashAccountId String?
+}
+
+model Invoice {
+  id          String   @id @default(cuid())
+  saleId      String   @unique
+  sale        Sale     @relation(fields: [saleId], references: [id])
+  invoiceNo   String   @unique
+  total       Int
+  paidAmount  Int
+  balance     Int // remaining (credit) amount
+  printCount  Int      @default(0)
+  createdAt   DateTime @default(now())
+}
+
+// ---------- Payments (customer / supplier) ----------
+model Payment {
+  id            String    @id @default(cuid())
+  partyType     String // CUSTOMER | SUPPLIER
+  customerId    String?
+  customer      Customer? @relation("CustomerPayments", fields: [customerId], references: [id])
+  supplierId    String?
+  supplier      Supplier? @relation("SupplierPayments", fields: [supplierId], references: [id])
+  receiptNo     String    @unique
+  amount        Int // paisa, always positive
+  method        String // CASH | BANK | EASYPAISA | JAZZCASH
+  cashAccountId String?
+  date          DateTime  @default(now())
+  note          String?
+  createdById   String?
+  createdAt     DateTime  @default(now())
+}
+
+// ---------- Ledgers ----------
+model CustomerLedger {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id])
+  type       String // CREDIT_SALE | PAYMENT | ADJUSTMENT | OPENING
+  amount     Int // signed paisa: + increases amount customer owes
+  refType    String?
+  refId      String?
+  date       DateTime @default(now())
+  note       String?
+}
+
+model SupplierLedger {
+  id         String   @id @default(cuid())
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id])
+  type       String // PURCHASE | PAYMENT | RETURN | ADJUSTMENT | OPENING
+  amount     Int // signed paisa: + increases amount business owes supplier
+  refType    String?
+  refId      String?
+  date       DateTime @default(now())
+  note       String?
+}
+
+// ---------- Expenses ----------
+model ExpenseCategory {
+  id        String    @id @default(cuid())
+  name      String    @unique
+  createdAt DateTime  @default(now())
+  expenses  Expense[]
+}
+
+model Expense {
+  id            String          @id @default(cuid())
+  title         String
+  categoryId    String
+  category      ExpenseCategory @relation(fields: [categoryId], references: [id])
+  amount        Int // paisa
+  date          DateTime        @default(now())
+  paymentMethod String          @default("CASH")
+  cashAccountId String?
+  description   String?
+  receiptPath   String?
+  recordedById  String?
+  createdAt     DateTime        @default(now())
+}
+
+// ---------- Cashbook ----------
+model CashAccount {
+  id             String   @id @default(cuid())
+  kind           String // CASH | BANK | EASYPAISA | JAZZCASH | OTHER
+  name           String
+  openingBalance Int      @default(0) // paisa
+  currentBalance Int      @default(0) // paisa, maintained transactionally
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+}
+
+model CashTransaction {
+  id            String   @id @default(cuid())
+  accountId     String
+  type          String // IN | OUT | TRANSFER_IN | TRANSFER_OUT
+  amount        Int // paisa, always positive; direction is in `type`
+  category      String // SALE | PURCHASE | EXPENSE | CAPITAL | LOAN | LOAN_REPAY | WITHDRAWAL | CUSTOMER_PAYMENT | SUPPLIER_PAYMENT | TRANSFER | ADJUSTMENT | DISTRIBUTION | RESERVE
+  refType       String?
+  refId         String?
+  note          String?
+  date          DateTime @default(now())
+  createdById   String?
+  createdAt     DateTime @default(now())
+
+  @@index([accountId, date])
+}
+
+// ---------- Partnership accounting ----------
+model ProfitDistribution {
+  id            String   @id @default(cuid())
+  closingId     String
+  closing       MonthlyClosing @relation(fields: [closingId], references: [id])
+  partnerId     String
+  partner       Partner  @relation(fields: [partnerId], references: [id])
+  amount        Int // paisa
+  status        String   @default("PENDING") // PENDING | APPROVED | PAID
+  paidDate      DateTime?
+  cashAccountId String?
+  createdAt     DateTime @default(now())
+}
+
+model BusinessReserve {
+  id        String   @id @default(cuid())
+  closingId String?
+  closing   MonthlyClosing? @relation(fields: [closingId], references: [id])
+  kind      String // ADD | USE
+  amount    Int // paisa, always positive
+  date      DateTime @default(now())
+  note      String?
+  createdAt DateTime @default(now())
+}
+
+model MonthlyClosing {
+  id                    String               @id @default(cuid())
+  month                 String               @unique // YYYY-MM
+  status                String               @default("DRAFT") // DRAFT | CLOSED
+  locked                Boolean              @default(false)
+  netSales              Int                  @default(0)
+  cogs                  Int                  @default(0)
+  grossProfit           Int                  @default(0)
+  expenses              Int                  @default(0)
+  netProfit             Int                  @default(0)
+  reservePct            Int                  @default(0)
+  reserveAmount         Int                  @default(0)
+  distributable         Int                  @default(0)
+  partner1Share         Int                  @default(0)
+  partner2Share         Int                  @default(0)
+  closingInventoryValue Int                  @default(0)
+  customerOutstanding   Int                  @default(0)
+  supplierOutstanding   Int                  @default(0)
+  cashBalance           Int                  @default(0)
+  notes                 String?
+  closedAt              DateTime?
+  closedById            String?
+  createdAt             DateTime             @default(now())
+  distributions         ProfitDistribution[]
+  reserves              BusinessReserve[]
+}
+
+// ---------- Audit & settings ----------
+model AuditLog {
+  id         String   @id @default(cuid())
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id])
+  action     String // e.g. SALE_CREATED, PRICE_CHANGED, STOCK_ADJUSTED, TXN_REVERSED, DISTRIBUTION_APPROVED, MONTH_CLOSED
+  entityType String?
+  entityId   String?
+  details    String? // JSON
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model AppSettings {
+  key   String @id
+  value String // JSON-encoded
+}

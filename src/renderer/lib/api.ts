@@ -1,0 +1,87 @@
+// Renderer API client — typed wrappers over the secure preload bridge.
+import type { DashboardStats, MonthlyClosePreview } from '@shared/types';
+
+declare global {
+  interface Window {
+    shopdesk: { invoke: (channel: string, payload?: unknown) => Promise<unknown> };
+  }
+}
+
+export async function call<T>(channel: string, payload?: unknown): Promise<T> {
+  return window.shopdesk.invoke(channel, payload) as Promise<T>;
+}
+
+export const api = {
+  login: (username: string, password: string) =>
+    call<{ id: string; name: string; username: string; role: 'ADMIN' | 'WORKING_PARTNER' }>('auth:login', { username, password }),
+  logout: () => call('auth:logout'),
+  userCount: () => call<number>('auth:userCount'),
+  listUsers: () => call<Record<string, unknown>[]>('auth:listUsers'),
+  createUser: (d: unknown) => call('auth:createUser', d),
+  settingsGet: () => call<Record<string, unknown>>('settings:get'),
+  settingsSave: (d: unknown) => call('settings:save', d),
+  dashboard: () => call<DashboardStats>('reports:dashboard'),
+  profitAndLoss: (month: string) => call<Record<string, unknown>>('reports:profitAndLoss', { month }),
+  balanceSheet: () => call<Record<string, unknown>>('reports:balanceSheet'),
+  cashFlow: (from: string, to: string) => call<Record<string, unknown>>('reports:cashFlow', { from, to }),
+  productSales: (from: string, to: string) => call<Record<string, unknown>[]>('reports:productSales', { from, to }),
+  stockValuation: () => call<Record<string, unknown>[]>('reports:stockValuation'),
+  auditLogs: (limit = 200) => call<Record<string, unknown>[]>('reports:auditLogs', { limit }),
+  categories: () => call<{ id: string; name: string }[]>('catalog:categories'),
+  createCategory: (name: string) => call('catalog:createCategory', { name }),
+  products: (f?: unknown) => call<Record<string, unknown>[]>('catalog:products', f),
+  product: (id: string) => call<Record<string, unknown>>('catalog:product', { id }),
+  createProduct: (d: unknown) => call('catalog:createProduct', d),
+  updateProduct: (id: string, d: unknown) => call('catalog:updateProduct', { id, data: d }),
+  deleteProduct: (id: string) => call('catalog:deleteProduct', { id }),
+  adjustStock: (d: unknown) => call('catalog:adjustStock', d),
+  stockMovements: (productId?: string, limit = 100) => call<Record<string, unknown>[]>('catalog:stockMovements', { productId, limit }),
+  suppliers: () => call<Record<string, unknown>[]>('catalog:suppliers'),
+  createSupplier: (d: unknown) => call('catalog:createSupplier', d),
+  supplierStatement: (id: string) => call<Record<string, unknown>>('catalog:supplierStatement', { id }),
+  customers: () => call<Record<string, unknown>[]>('catalog:customers'),
+  createCustomer: (d: unknown) => call('catalog:createCustomer', d),
+  customerStatement: (id: string) => call<Record<string, unknown>>('catalog:customerStatement', { id }),
+  createPurchase: (d: unknown) => call('purchases:create', d),
+  purchases: (f?: unknown) => call<Record<string, unknown>[]>('purchases:list', f),
+  purchase: (id: string) => call<Record<string, unknown>>('purchases:get', { id }),
+  supplierReturn: (d: unknown) => call('purchases:supplierReturn', d),
+  createSale: (d: unknown) => call<Record<string, unknown>>('sales:create', d),
+  sales: (f?: unknown) => call<Record<string, unknown>[]>('sales:list', f),
+  sale: (id: string) => call<Record<string, unknown>>('sales:get', { id }),
+  saleByInvoice: (invoiceNo: string) => call<Record<string, unknown>>('sales:byInvoice', { invoiceNo }),
+  refundSale: (saleId: string, reason: string) => call('sales:refund', { saleId, reason }),
+  cashAccounts: () => call<Record<string, unknown>[]>('finance:cashAccounts'),
+  createCashAccount: (d: unknown) => call('finance:createCashAccount', d),
+  transfer: (d: unknown) => call('finance:transfer', d),
+  cashTransactions: (accountId?: string, limit = 200) => call<Record<string, unknown>[]>('finance:cashTransactions', { accountId, limit }),
+  expenseCategories: () => call<{ id: string; name: string }[]>('finance:expenseCategories'),
+  createExpenseCategory: (name: string) => call('finance:createExpenseCategory', { name }),
+  createExpense: (d: unknown) => call('finance:createExpense', d),
+  expenses: (f?: unknown) => call<Record<string, unknown>[]>('finance:expenses', f),
+  recordPayment: (d: unknown) => call('finance:recordPayment', d),
+  dailyCashCount: (d: unknown) => call('finance:dailyCashCount', d),
+  partners: () => call<Record<string, unknown>[]>('partners:list'),
+  createPartner: (d: unknown) => call('partners:create', d),
+  updatePartnerShare: (partnerId: string, pct: number) => call('partners:updateShare', { partnerId, pct }),
+  addCapital: (d: unknown) => call('partners:addCapital', d),
+  addLoan: (d: unknown) => call('partners:addLoan', d),
+  repayLoan: (d: unknown) => call('partners:repayLoan', d),
+  addWithdrawal: (d: unknown) => call('partners:addWithdrawal', d),
+  partnerStatement: (id: string) => call<Record<string, unknown>>('partners:statement', { id }),
+  reserveBalance: () => call<number>('partners:reserveBalance'),
+  useReserve: (d: unknown) => call('partners:useReserve', d),
+  payDistribution: (d: unknown) => call('partners:payDistribution', d),
+  closePreview: (month: string) => call<MonthlyClosePreview>('closing:preview', { month }),
+  closeMonth: (month: string, notes?: string) => call('closing:close', { month, notes }),
+  closings: () => call<Record<string, unknown>[]>('closing:list'),
+  closing: (month: string) => call<Record<string, unknown>>('closing:get', { month }),
+  backupCreate: (label?: string) => call<string>('backup:create', { label }),
+  backupList: () => call<Record<string, unknown>[]>('backup:list'),
+  backupVerify: (path: string) => call<Record<string, unknown>>('backup:verify', { path }),
+  backupRestore: (path: string) => call('backup:restore', { path }),
+  backupExport: () => call<string | null>('backup:export'),
+  backupPickFile: () => call<string | null>('backup:pickFile'),
+  printInvoice: (saleId: string, width: '58' | '80' | 'A4') => call('print:invoice', { saleId, width }),
+  exportInvoicePdf: (saleId: string) => call('print:invoicePdf', { saleId }),
+};

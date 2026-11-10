@@ -1,0 +1,43 @@
+appId: com.shopdesk.app
+productName: ShopDesk
+copyright: Copyright © 2026 ShopDesk
+directories:
+  output: release
+  buildResources: build
+files:
+  - dist-electron/**/*
+  - dist/renderer/**/*
+  - package.json
+  - prisma/schema.prisma
+  - resources/**/*
+  # Prisma's native query engine is NOT picked up by electron-builder's
+  # default node_modules scan (it lives in devDependencies in most setups),
+  # so list it explicitly. Without it the packaged app crashes on its
+  # first database call. It is a real runtime dependency (see package.json).
+  - node_modules/@prisma/engines/**/*
+  - "!**/*.map"
+asar: true
+asarUnpack:
+  - "**/node_modules/.prisma/**/*"
+  - "**/node_modules/@prisma/engines/**/*"
+  - "**/node_modules/prisma/**/*"
+  # The generated client carries its own copies of the query-engine
+  # binaries; they must live outside the asar or Node cannot load them.
+  - "**/dist-electron/main/generated-prisma/**/*"
+extraResources:
+  - from: resources
+    to: migrations
+win:
+  target:
+    - nsis
+    - portable
+  icon: build/icon.ico
+  artifactName: ${productName}-${version}-Setup.${ext}
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: ShopDesk
+portable:
+  artifactName: ${productName}-${version}-Portable.${ext}

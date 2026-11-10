@@ -47,9 +47,7 @@ stays on your own computer.
 
 ## Install (Windows 10/11)
 
-1. Download `ShopDesk-1.0.0-Portable.exe` (no install needed — just run it)
-   or `ShopDesk-1.0.0-Setup.exe` (installer: pick a folder, creates desktop
-   and Start Menu shortcuts).
+1. Download `ShopDesk-1.0.0-Portable.exe` from the Releases page (no install needed — just run it).
 2. First run creates your database and loads demo data so you can try
    everything safely.
 3. Demo logins: **admin / admin123** (full access) and

@@ -20,7 +20,7 @@
     "seed": "tsx scripts/seed.ts",
     "test:scenarios": "tsx tests/scenarios.ts",
     "test:setup": "tsx tests/setup.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
+    "typecheck": "npm run prisma:generate && tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
     "test:migrations": "tsx tests/migrations.ts"
   },
   "dependencies": {

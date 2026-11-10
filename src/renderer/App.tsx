@@ -18,14 +18,17 @@ import ProfitLoss from './pages/ProfitLoss';
 import Reports from './pages/Reports';
 import Backup from './pages/Backup';
 import Settings from './pages/Settings';
+import Setup from './pages/Setup';
+import Tutorial from './pages/Tutorial';
 
 export type Page =
-  | 'dashboard' | 'pos' | 'products' | 'inventory' | 'purchases' | 'sales'
+  | 'dashboard' | 'tutorial' | 'pos' | 'products' | 'inventory' | 'purchases' | 'sales'
   | 'invoices' | 'expenses' | 'customers' | 'udhaar' | 'suppliers' | 'cashbook'
   | 'partnership' | 'pl' | 'reports' | 'backup' | 'settings';
 
 const NAV: { id: Page; label: string; icon: string; adminOnly?: boolean }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: '▦' },
+  { id: 'tutorial', label: 'Tutorial', icon: '🎓' },
   { id: 'pos', label: 'Point of Sale', icon: '🧾' },
   { id: 'products', label: 'Products', icon: '📦' },
   { id: 'inventory', label: 'Inventory', icon: '🏷️' },
@@ -56,6 +59,7 @@ export default function App() {
   const [page, setPage] = useState<Page>('dashboard');
   const [dark, setDark] = useState(false);
   const [shopName, setShopName] = useState('ShopDesk');
+  const [setup, setSetup] = useState<{ needsSetup: boolean; demoMode: boolean } | null>(null);
   const toast = useToast();
 
   useEffect(() => {
@@ -63,10 +67,37 @@ export default function App() {
   }, [dark]);
 
   useEffect(() => {
+    api.setupStatus().then(setSetup).catch(() => setSetup({ needsSetup: false, demoMode: false }));
+  }, []);
+
+  useEffect(() => {
     api.settingsGet().then((s) => setShopName((s.shopName as string) || 'ShopDesk')).catch(() => undefined);
   }, [user]);
 
-  if (!user) return <Login onLogin={setUser} />;
+  if (!user) {
+    if (setup === null) {
+      return (
+        <div className="flex h-full items-center justify-center bg-slate-100 dark:bg-slate-900">
+          <p className="text-sm text-slate-400">Loading ShopDesk…</p>
+        </div>
+      );
+    }
+    if (setup.needsSetup) {
+      return (
+        <Setup
+          onDone={(u) => {
+            if (u === 'demo') {
+              setSetup({ needsSetup: false, demoMode: true });
+            } else {
+              setUser(u);
+              setPage('tutorial');
+            }
+          }}
+        />
+      );
+    }
+    return <Login demoMode={setup.demoMode} onLogin={setUser} />;
+  }
 
   const visibleNav = NAV.filter((n) => !n.adminOnly || user.role === 'ADMIN');
 
@@ -111,6 +142,7 @@ export default function App() {
       {/* Main */}
       <main className="min-w-0 flex-1 overflow-y-auto p-5">
         {page === 'dashboard' && <Dashboard go={setPage} />}
+        {page === 'tutorial' && <Tutorial go={setPage} />}
         {page === 'pos' && <POS />}
         {page === 'products' && <Products />}
         {page === 'inventory' && <Inventory />}
@@ -133,16 +165,11 @@ export default function App() {
   );
 }
 
-function Login({ onLogin }: { onLogin: (u: Session) => void }) {
+function Login({ onLogin, demoMode }: { onLogin: (u: Session) => void; demoMode: boolean }) {
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
   const [err, setErr] = useState('');
   const [busy, setBusy] = useState(false);
-  const [hasUsers, setHasUsers] = useState(true);
-
-  useEffect(() => {
-    api.userCount().then((n) => setHasUsers(n > 0)).catch(() => undefined);
-  }, []);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,13 +200,14 @@ function Login({ onLogin }: { onLogin: (u: Session) => void }) {
           {err && <p className="text-sm text-red-600">{err}</p>}
           <Btn type="submit" className="w-full" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</Btn>
         </div>
-        {!hasUsers && (
+        {demoMode && (
           <p className="mt-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
-            First run: demo data was created. Use <b>admin / admin123</b> (owner) or <b>partner / partner123</b> (working partner). Change these passwords in Settings → Users.
+            Demo data: sign in with <b>admin / admin123</b> (owner) or <b>partner / partner123</b> (working partner).
+            This is sample data for practice — change both passwords in Settings → Users before real use.
           </p>
         )}
-        {hasUsers && (
-          <p className="mt-4 text-center text-[11px] text-slate-400">Demo logins — admin / admin123 · partner / partner123</p>
+        {!demoMode && (
+          <p className="mt-4 text-center text-[11px] text-slate-400">Sign in with the account created during setup.</p>
         )}
       </form>
     </div>

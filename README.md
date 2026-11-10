@@ -47,23 +47,24 @@ stays on your own computer.
 
 ## Install (Windows 10/11)
 
-1. Download `ShopDesk-1.0.0-Portable.exe` from the Releases page (no install needed — just run it).
-2. First run creates your database and loads demo data so you can try
-   everything safely.
-3. Demo logins: **admin / admin123** (full access) and
-   **partner / partner123** (Working Partner: POS, inventory, purchases,
-   expenses, customers, daily reports).
+1. Download `ShopDesk-1.1.0-Portable.exe` from the Releases page (no install needed — just run it).
+2. First run shows a setup screen with two choices:
+   - **Set up my shop** — clean start: your shop name, partners and your
+     own logins. Nothing is pre-filled.
+   - **Explore with demo data** — loads a sample shop to practise with.
+     Demo logins: **admin / admin123** (full access) and **partner /
+     partner123** (Working Partner: POS, inventory, purchases, expenses,
+     customers, daily reports).
 
 ## First steps after install
 
-1. Sign in as admin, go to **Settings** and change the shop name, address,
-   phone and the demo passwords. Change the reserve percentage if you want
-   a different share kept back before profit is distributed.
-2. Go to **Partnership** and enter the two partners' real names and the
-   agreed profit share (default 50/50).
-3. In **Products**, delete the demo products and add your real stock — or
-   record your first real purchase in **Purchases** (it adds the stock for
-   you).
+1. On first run, choose **Set up my shop** and follow the three steps
+   (shop details, partners and profit shares, your logins).
+2. After setup, the app opens on the **Tutorial** page — eight steps that
+   walk you through your first week. You can open it any time from the
+   sidebar.
+3. Add your products in **Products**, or record your first real purchase
+   in **Purchases** (it adds the stock for you).
 4. Take a backup from **Backup & Restore** once your real data is in.
 
 ## Updating without losing data
@@ -74,18 +75,21 @@ a newer ShopDesk version over the old one, or replacing the .exe, never
 touches it. To be safe, take a backup from Backup & Restore before any
 update, and keep a copy on a USB stick.
 
-## Demo data (what the first run contains)
+## Demo data (optional, for practice)
 
-- Shop: "Naimat Kiryana Store", Dargah Road, Pir Jo Goth (change it in
-  Settings — it is only an example).
+Choosing **Explore with demo data** on the first screen loads a sample
+shop you can break safely:
+
+- Shop: "Naimat Kiryana Store", Dargah Road, Pir Jo Goth.
 - Partners: Capital Partner (Rs 300,000 invested) and Working Partner,
   50/50.
 - 14 grocery products, 2 suppliers, 2 purchases (one cash, one part credit),
   6 sales (cash, Easypaisa and one credit), 3 expenses.
-- To start clean instead: sign in as admin → **Backup & Restore** →
-  restore is not needed; delete demo products/purchases from their pages,
-  or delete `%APPDATA%\ShopDesk\shopdesk.db` while the app is closed and
-  relaunch (a fresh demo database is created — then delete the demo rows).
+- Logins: **admin / admin123** and **partner / partner123**.
+
+Demo mode is only a starting choice. For real use, pick **Set up my shop**
+instead — or delete `%APPDATA%\ShopDesk\shopdesk.db` while the app is
+closed and relaunch to go through setup again.
 
 ## Running the checks
 
@@ -93,6 +97,7 @@ update, and keep a copy on a USB stick.
 npm install --ignore-scripts   # then see "Prisma engine" note below
 npm run typecheck              # TypeScript (renderer + main)
 npm run test:scenarios         # scenarios A–I against the real services
+npm run test:setup             # first-run setup: clean setup, demo mode, refusals
 npm run build                  # production build (renderer + main)
 npm run dist:win               # Windows installer + portable .exe
                                # (on Windows: both. In this Linux sandbox

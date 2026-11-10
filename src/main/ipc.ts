@@ -11,8 +11,8 @@ import * as closing from './services/closing';
 import * as reports from './services/reports';
 import * as backup from './services/backup';
 import * as auth from './services/auth';
-import { settingsSchema, loginSchema } from '../shared/schemas';
-import { seedIfEmpty } from './seed';
+import { settingsSchema, loginSchema, setupSchema } from '../shared/schemas';
+import { getSetupStatus, completeSetup, loadDemoSetup } from './setup';
 
 type Handler = (payload: unknown, userId: string | null) => Promise<unknown>;
 
@@ -39,6 +39,14 @@ const handlers: Record<string, Handler> = {
     const d = p as { userId: string; oldPassword: string; newPassword: string };
     return auth.changePassword(d.userId, d.oldPassword, d.newPassword);
   },
+
+  // first-run setup
+  'setup:status': async () => getSetupStatus(),
+  'setup:complete': async (p) => {
+    const data = setupSchema.parse(p);
+    return completeSetup(data);
+  },
+  'setup:loadDemo': async () => loadDemoSetup(),
 
   // settings
   'settings:get': async () => getShopSettings(),
@@ -184,7 +192,7 @@ const handlers: Record<string, Handler> = {
     await shell.openPath((p as { path: string }).path);
     return { ok: true };
   },
-  'app:version': async () => ({ version: '1.0.0' }),
+  'app:version': async () => ({ version: '1.1.0' }),
 };
 
 export function registerIpc(mainWindow: BrowserWindow): void {
@@ -211,6 +219,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
 }
 
 export async function bootstrapDatabase(): Promise<void> {
+  // Migrations only. First-run setup is the user's choice now (clean shop
+  // or demo data) via the Setup wizard — nothing is seeded automatically.
   await runMigrations();
-  await seedIfEmpty();
 }

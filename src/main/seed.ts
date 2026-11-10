@@ -9,6 +9,10 @@ import { createExpense } from './services/finance';
 
 const P = (rs: number) => Math.round(rs * 100);
 
+// Base lists every shop starts with (also used by clean setup).
+export const BASE_EXPENSE_CATEGORIES = ['Shop rent', 'Electricity', 'Water', 'Internet', 'Transport', 'Packaging bags', 'Repairs', 'Cleaning', 'Tea and refreshments', 'Employee wages', 'Other expenses'];
+export const BASE_PRODUCT_CATEGORIES = ['Grocery', 'Beverages', 'Snacks', 'Household', 'Personal Care', 'Dairy', 'Spices'];
+
 export async function seedIfEmpty(): Promise<void> {
   const meta = await getSetting<{ seeded?: boolean } | null>('meta', null);
   if (meta?.seeded) return;
@@ -26,7 +30,7 @@ export async function seedIfEmpty(): Promise<void> {
 }
 
 /** Delete every business row (children first). _migrations is untouched. */
-async function wipeAll(): Promise<void> {
+export async function wipeAll(): Promise<void> {
   const db = getPrisma();
   await db.auditLog.deleteMany();
   await db.profitDistribution.deleteMany();
@@ -89,7 +93,7 @@ export async function seedDemo(): Promise<void> {
   const jazz = await db.cashAccount.create({ data: { kind: 'JAZZCASH', name: 'JazzCash', openingBalance: 0, currentBalance: 0 } });
 
   // Expense categories
-  const catNames = ['Shop rent', 'Electricity', 'Water', 'Internet', 'Transport', 'Packaging bags', 'Repairs', 'Cleaning', 'Tea and refreshments', 'Employee wages', 'Other expenses'];
+  const catNames = BASE_EXPENSE_CATEGORIES;
   const expCats: Record<string, string> = {};
   for (const name of catNames) {
     const c = await db.expenseCategory.create({ data: { name } });
@@ -98,7 +102,7 @@ export async function seedDemo(): Promise<void> {
 
   // Product categories
   const prodCats: Record<string, string> = {};
-  for (const name of ['Grocery', 'Beverages', 'Snacks', 'Household', 'Personal Care', 'Dairy', 'Spices']) {
+  for (const name of BASE_PRODUCT_CATEGORIES) {
     const c = await db.category.create({ data: { name } });
     prodCats[name] = c.id;
   }

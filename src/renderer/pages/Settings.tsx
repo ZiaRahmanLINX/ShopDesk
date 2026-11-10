@@ -104,11 +104,10 @@ export default function Settings() {
       </Card>
 
       <Card>
-        <CardHeader title="About ShopDesk" sub="Version 1.0.0 — offline-first, local SQLite database" />
+        <CardHeader title="About ShopDesk" sub="Version 1.1.1 — offline-first, local SQLite database" />
         <div className="space-y-1 p-4 text-sm text-slate-500">
           <p>Money is stored in integer paisa — never floating point. Stock cost uses FIFO lots, so historical purchase prices are never rewritten.</p>
           <p>Your database lives in the app's user data folder and is backed up daily (Backup & Restore). Closing a month locks it against silent changes.</p>
-          <p>Demo logins: admin / admin123 · partner / partner123 — change them after first sign-in.</p>
         </div>
       </Card>
       {toast.el}

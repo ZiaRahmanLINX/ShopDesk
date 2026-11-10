@@ -47,14 +47,11 @@ stays on your own computer.
 
 ## Install (Windows 10/11)
 
-1. Download `ShopDesk-1.1.0-Portable.exe` from the Releases page (no install needed — just run it).
+1. Download `ShopDesk-1.1.1-Portable.exe` from the Releases page (no install needed — just run it).
 2. First run shows a setup screen with two choices:
    - **Set up my shop** — clean start: your shop name, partners and your
      own logins. Nothing is pre-filled.
    - **Explore with demo data** — loads a sample shop to practise with.
-     Demo logins: **admin / admin123** (full access) and **partner /
-     partner123** (Working Partner: POS, inventory, purchases, expenses,
-     customers, daily reports).
 
 ## First steps after install
 
@@ -74,22 +71,6 @@ Your database lives in Windows at
 a newer ShopDesk version over the old one, or replacing the .exe, never
 touches it. To be safe, take a backup from Backup & Restore before any
 update, and keep a copy on a USB stick.
-
-## Demo data (optional, for practice)
-
-Choosing **Explore with demo data** on the first screen loads a sample
-shop you can break safely:
-
-- Shop: "Naimat Kiryana Store", Dargah Road, Pir Jo Goth.
-- Partners: Capital Partner (Rs 300,000 invested) and Working Partner,
-  50/50.
-- 14 grocery products, 2 suppliers, 2 purchases (one cash, one part credit),
-  6 sales (cash, Easypaisa and one credit), 3 expenses.
-- Logins: **admin / admin123** and **partner / partner123**.
-
-Demo mode is only a starting choice. For real use, pick **Set up my shop**
-instead — or delete `%APPDATA%\ShopDesk\shopdesk.db` while the app is
-closed and relaunch to go through setup again.
 
 ## Running the checks
 

@@ -192,7 +192,7 @@ const handlers: Record<string, Handler> = {
     await shell.openPath((p as { path: string }).path);
     return { ok: true };
   },
-  'app:version': async () => ({ version: '1.1.0' }),
+  'app:version': async () => ({ version: '1.1.1' }),
 };
 
 export function registerIpc(mainWindow: BrowserWindow): void {

@@ -103,9 +103,25 @@ try {
   console.log('--- after setup ---');
   console.log(text);
   if (!ok) throw new Error('Tutorial page did not appear after setup');
+
+  // Open Settings and verify the About card: correct version, no demo logins.
+  // (Sidebar button is icon + "Settings"; the Tutorial page also has an
+  // "Open Settings" button, so exclude that one.)
+  console.log(
+    'open settings:',
+    await evalJs(
+      `(() => { const b = [...document.querySelectorAll('button')].find(x => x.textContent.includes('Settings') && !x.textContent.includes('Open')); if (b) { b.click(); return true; } return false; })()`,
+    ),
+  );
+  await sleep(1500);
+  text = await bodyText();
+  console.log('--- settings page ---');
+  console.log(text.slice(0, 1000));
+  if (!text.includes('Version 1.1.1')) throw new Error('About card does not show Version 1.1.1');
+  if (text.includes('Demo logins')) throw new Error('About card still shows demo logins');
   const shot = await send('Page.captureScreenshot', { format: 'png' });
-  fs.writeFileSync('/tmp/shopdesk-tutorial.png', Buffer.from(shot.result.data, 'base64'));
-  console.log('screenshot saved: /tmp/shopdesk-tutorial.png');
+  fs.writeFileSync('/tmp/shopdesk-settings.png', Buffer.from(shot.result.data, 'base64'));
+  console.log('screenshot saved: /tmp/shopdesk-settings.png');
 } catch (e) {
   failed = true;
   console.error(e);

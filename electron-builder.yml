@@ -1,3 +1,9 @@
+# Never auto-publish a release: electron-builder tries to publish to GitHub
+# after building and fails without a GH_TOKEN (that is what broke the first
+# GitHub Actions run). Releases are published deliberately, with
+# user-approved notes — the CI workflow only uploads the built files as
+# artifacts.
+publish: null
 appId: com.shopdesk.app
 productName: ShopDesk
 copyright: Copyright © 2026 ShopDesk

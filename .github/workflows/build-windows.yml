@@ -1,0 +1,33 @@
+# Build the real Windows installer (NSIS Setup.exe) + portable exe on a
+# Windows runner. NSIS cannot be built on Linux (no Wine in the sandbox),
+# so this workflow is the only way to produce ShopDesk-*-Setup.exe.
+# Runs on every push to main and on manual dispatch.
+name: Build Windows installer
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run test:scenarios
+      - run: npm run test:setup
+      - run: npm run test:migrations
+      - run: npm run dist:win
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ShopDesk-Windows
+          path: |
+            release/ShopDesk-*-Setup.exe
+            release/ShopDesk-*-Portable.exe
+          retention-days: 30

@@ -77,9 +77,8 @@ export default function Tutorial({ go }: { go: (p: Page) => void }) {
       <Card>
         <p className="font-semibold">Want to practise first?</p>
         <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-          On a fresh install, the first screen offers “Explore with demo data”: a sample shop with products, sales and
-          customers you can break safely. If you already set up your own shop, the demo is gone — but you can still
-          practise on a second computer, or take a backup, try things, and restore the backup afterwards.
+          Take a backup first (Backup page), try things freely, and restore the backup afterwards to undo
+          everything. That is the safe way to practise on your real shop data.
         </p>
       </Card>
     </div>

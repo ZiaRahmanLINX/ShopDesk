@@ -12,7 +12,7 @@ import * as reports from './services/reports';
 import * as backup from './services/backup';
 import * as auth from './services/auth';
 import { settingsSchema, loginSchema, setupSchema } from '../shared/schemas';
-import { getSetupStatus, completeSetup, loadDemoSetup } from './setup';
+import { getSetupStatus, completeSetup } from './setup';
 
 type Handler = (payload: unknown, userId: string | null) => Promise<unknown>;
 
@@ -46,7 +46,6 @@ const handlers: Record<string, Handler> = {
     const data = setupSchema.parse(p);
     return completeSetup(data);
   },
-  'setup:loadDemo': async () => loadDemoSetup(),
 
   // settings
   'settings:get': async () => getShopSettings(),
@@ -192,7 +191,7 @@ const handlers: Record<string, Handler> = {
     await shell.openPath((p as { path: string }).path);
     return { ok: true };
   },
-  'app:version': async () => ({ version: '1.1.1' }),
+  'app:version': async () => ({ version: '1.1.2' }),
 };
 
 export function registerIpc(mainWindow: BrowserWindow): void {
@@ -219,7 +218,7 @@ export function registerIpc(mainWindow: BrowserWindow): void {
 }
 
 export async function bootstrapDatabase(): Promise<void> {
-  // Migrations only. First-run setup is the user's choice now (clean shop
-  // or demo data) via the Setup wizard — nothing is seeded automatically.
+  // Migrations only. First-run setup is the Setup wizard (clean shop,
+  // the user's own logins) — nothing is seeded automatically.
   await runMigrations();
 }

@@ -1,9 +1,11 @@
-// First-run setup: a clean shop setup, or demo data to explore.
-// Replaces the old auto-seed on first launch — a new user now chooses.
-// Existing databases (already seeded or already set up) are untouched:
-// they already have users, so getSetupStatus reports needsSetup: false.
+// First-run setup: a clean shop setup with the user's own logins.
+// (The old demo-data path was removed in v1.1.2 — every user creates
+// their own account. The `demo` flag in meta/setup status is kept only so
+// databases set up with demo data before v1.1.2 still report correctly.)
+// Existing databases (already set up) are untouched: they already have
+// users, so getSetupStatus reports needsSetup: false.
 import { getPrisma, getSetting, setSetting, DEFAULT_SETTINGS } from './db';
-import { seedDemo, wipeAll, BASE_EXPENSE_CATEGORIES, BASE_PRODUCT_CATEGORIES } from './seed';
+import { wipeAll, BASE_EXPENSE_CATEGORIES, BASE_PRODUCT_CATEGORIES } from './seed';
 import { createUser } from './services/auth';
 import { createPartner } from './services/partners';
 import { setupSchema } from '../shared/schemas';
@@ -80,17 +82,5 @@ export async function completeSetup(input: unknown): Promise<{ ok: true }> {
     );
   }
   await setSetting('meta', { setupCompleted: true, demo: false });
-  return { ok: true };
-}
-
-/** Demo mode from the wizard: the classic demo shop (Naimat Kiryana Store)
- *  with sample products, sales and the admin/admin123 + partner/partner123
- *  logins, so a new user can explore before committing to their own setup. */
-export async function loadDemoSetup(): Promise<{ ok: true }> {
-  const db = getPrisma();
-  const users = await db.user.count();
-  if (users > 0) throw new Error('Shop is already set up');
-  await seedDemo();
-  await setSetting('meta', { seeded: true, setupCompleted: true, demo: true });
   return { ok: true };
 }

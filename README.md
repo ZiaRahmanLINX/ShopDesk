@@ -47,11 +47,10 @@ stays on your own computer.
 
 ## Install (Windows 10/11)
 
-1. Download `ShopDesk-1.1.1-Portable.exe` from the Releases page (no install needed — just run it).
-2. First run shows a setup screen with two choices:
-   - **Set up my shop** — clean start: your shop name, partners and your
-     own logins. Nothing is pre-filled.
-   - **Explore with demo data** — loads a sample shop to practise with.
+1. Download `ShopDesk-1.1.2-Portable.exe` from the Releases page (no install needed — just run it).
+2. First run shows the setup screen: enter your shop name, partners and
+   your own logins. Every user creates their own account — there is no
+   demo data and no shared password.
 
 ## First steps after install
 
@@ -78,7 +77,7 @@ update, and keep a copy on a USB stick.
 npm install --ignore-scripts   # then see "Prisma engine" note below
 npm run typecheck              # TypeScript (renderer + main)
 npm run test:scenarios         # scenarios A–I against the real services
-npm run test:setup             # first-run setup: clean setup, demo mode, refusals
+npm run test:setup             # first-run setup: clean setup, refusals
 npm run build                  # production build (renderer + main)
 npm run dist:win               # Windows installer + portable .exe
                                # (on Windows: both. In this Linux sandbox
@@ -97,8 +96,8 @@ works.
 
 See [TEST_RESULTS.md](TEST_RESULTS.md): all 42 checks in scenarios A–I
 pass, typecheck is clean, the production build succeeds, and the app was
-launched headlessly and driven through login to the dashboard (numbers
-verified against the demo seed).
+launched headlessly and driven through setup, login and the dashboard
+(numbers verified against the test shop data).
 
 ## Project layout
 

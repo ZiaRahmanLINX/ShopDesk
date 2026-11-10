@@ -52,21 +52,31 @@ export async function runMigrations(): Promise<void> {
   const done = new Set(applied.map((r) => r.name));
 
   const appPath = electronApp()?.getAppPath() || process.cwd();
-  const dirs = [
+  const candidates = [
     // packaged app: resources/migrations (extraResources)
     path.join((process as unknown as { resourcesPath?: string }).resourcesPath || '', 'migrations'),
     // dev: project resources/migrations
     path.join(appPath, 'resources', 'migrations'),
     path.join(__dirname, '..', '..', 'resources', 'migrations'),
   ];
+  // Pick the first candidate that actually contains migration files. A
+  // directory that merely exists (e.g. a mis-packaged empty one) must not
+  // silently satisfy this step — that is exactly how v1.1.0/v1.1.1 shipped
+  // an empty database on Windows: the app opened and login failed with
+  // "table main.User does not exist".
   let dir = '';
-  for (const d of dirs) {
-    if (d && fs.existsSync(d)) {
+  for (const d of candidates) {
+    if (!d || !fs.existsSync(d)) continue;
+    if (fs.readdirSync(d).some((f) => f.endsWith('.sql'))) {
       dir = d;
       break;
     }
   }
-  if (!dir) return;
+  if (!dir) {
+    throw new Error(
+      `ShopDesk database setup failed: no migration files found (looked in: ${candidates.join(', ')}). The app was not packaged correctly.`,
+    );
+  }
   const files = fs
     .readdirSync(dir)
     .filter((f) => f.endsWith('.sql'))
@@ -88,6 +98,14 @@ export async function runMigrations(): Promise<void> {
         `INSERT INTO "_migrations" ("name") VALUES ('${file.replace(/'/g, "''")}')`,
       );
     });
+  }
+  // Verify the core tables actually exist — a silent no-op here used to
+  // leave the app opening on an empty database, with login failing.
+  const tables = await db.$queryRawUnsafe<{ name: string }[]>(
+    `SELECT "name" FROM "sqlite_master" WHERE "type" = 'table' AND "name" = 'User'`,
+  );
+  if (tables.length === 0) {
+    throw new Error('ShopDesk database setup failed: the User table was not created.');
   }
 }
 

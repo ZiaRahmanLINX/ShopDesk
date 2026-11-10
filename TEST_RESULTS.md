@@ -127,6 +127,56 @@ present unpacked in both `node_modules/@prisma/engines` and
 
 - On the dashboard pie chart, the "Tea and refreshments" label can clip at
   the card's right edge at 1366px width.
-- All demo sales are dated "today" (the seed notes this) — so "today's
-  sales" equals "monthly sales" in the demo data. Real sales are dated
-  correctly.
+- (Removed in v1.1.2: the note above about demo sales no longer applies —
+  demo data no longer ships.)
+
+
+## 8. v1.1.2 — login bug fix + demo removal (2026-11-11)
+
+**Bug (found on a real Windows PC, 2026-11-10):** first launch showed the
+login screen, but signing in failed with `Invalid db.user.findUnique() …
+The table main.User does not exist in the current database.` Root cause:
+`extraResources` in electron-builder.yml copied the whole `resources/`
+folder into `resources/migrations/`, so the migration file landed at
+`resources/migrations/migrations/0001_init.sql` — one level too deep.
+`runMigrations()` found no `.sql` files, applied nothing, and returned
+successfully, leaving an empty database. The app opened anyway because
+`bootstrapDatabase()` swallows its error and the setup-status check
+defaulted to "setup done" on failure.
+
+**Fix:**
+- `electron-builder.yml`: `extraResources` now copies `resources/migrations`
+  (the files) into `migrations`, so `0001_init.sql` lands at
+  `resources/migrations/0001_init.sql`. Verified in the packaged build:
+  `release/win-unpacked/resources/migrations/0001_init.sql` exists, no
+  nested directory.
+- `src/main/db.ts` `runMigrations()`: picks the first candidate directory
+  that actually contains `.sql` files (falls through to the copy inside
+  app.asar if needed); throws a clear error if no migration files are
+  found anywhere; verifies the `User` table exists after applying.
+- `src/renderer/App.tsx`: a setup-status failure now shows a database
+  error screen instead of silently opening the login screen; a
+  missing-table login error shows a plain-language message instead of the
+  raw Prisma error.
+- New regression test `tests/migrations.ts` (`npm run test:migrations`):
+  6 checks, all passed — fresh DB gets its tables, re-running is
+  idempotent, fresh DB reports needsSetup, clean-setup login works.
+
+**Demo removal (user request):** first-run setup is now clean setup only —
+every user creates their own account. Removed: the "Explore with demo
+data" choice from the Setup wizard, the `setup:loadDemo` IPC handler, the
+demo seed code (`seedDemo`/`seedIfEmpty`), the demo hint on the login
+screen, and demo mentions from the README, user guide and tutorial.
+`tests/setup.ts` demo section replaced; `tests/migrations.ts` now uses
+clean setup. The `demo` flag in setup status/meta is kept only so
+databases set up with demo data before v1.1.2 still report correctly.
+
+**Verified for v1.1.2:** typecheck clean; 42/42 scenario checks;
+setup checks pass; 6/6 migration checks pass; headless e2e drove the
+clean setup wizard → tutorial → Settings (About card shows "Version
+1.1.2"); portable exe built
+(`ShopDesk-1.1.2-Portable.exe`, 109,450,042 bytes, SHA-256
+`59d31f10057fda632f68b5766dbc175d5072d171594386387cd40f5952d2f7c8`).
+Still not verified on a real Windows PC — the fix is verified in
+packaging, tests and headless runs; the user is the first real-Windows
+check.

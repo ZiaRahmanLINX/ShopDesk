@@ -1,9 +1,7 @@
 // First-run Setup Wizard. Shown instead of the login screen when the
-// database has no users yet. Two paths:
-//  - "Set up my shop": clean start — shop details, partners, your own
-//    logins. No demo data.
-//  - "Explore with demo data": the classic demo shop (admin/admin123,
-//    partner/partner123) to practise with before committing.
+// database has no users yet. One path only: clean setup — shop details,
+// partners, your own logins. There is no demo data; every user creates
+// their own account.
 import { useState } from 'react';
 import { api } from '../lib/api';
 import { Btn, Input, Field, Select } from '../components/ui';
@@ -17,8 +15,8 @@ interface Session {
 
 type PartnerForm = { name: string; type: 'CAPITAL' | 'WORKING'; share: number };
 
-export default function Setup({ onDone }: { onDone: (u: Session | 'demo') => void }) {
-  const [step, setStep] = useState<0 | 1 | 2 | 3>(0);
+export default function Setup({ onDone }: { onDone: (u: Session) => void }) {
+  const [step, setStep] = useState<1 | 2 | 3>(1);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState('');
 
@@ -51,19 +49,6 @@ export default function Setup({ onDone }: { onDone: (u: Session | 'demo') => voi
       setP2({ ...p2, share: 50 });
     } else {
       setP1({ ...p1, share: 100 });
-    }
-  };
-
-  const loadDemo = async () => {
-    setBusy(true);
-    setErr('');
-    try {
-      await api.setupLoadDemo();
-      onDone('demo');
-    } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Could not load demo data');
-    } finally {
-      setBusy(false);
     }
   };
 
@@ -143,47 +128,18 @@ export default function Setup({ onDone }: { onDone: (u: Session | 'demo') => voi
     }
   };
 
-  const stepsLabel = ['Choose how to start', 'Your shop', 'Partners', 'Your logins'][step];
+  const stepsLabel = ['Your shop', 'Partners', 'Your logins'][step - 1];
 
   return (
     <div className="flex h-full items-center justify-center overflow-y-auto bg-slate-100 p-4 dark:bg-slate-900">
       <div className="w-full max-w-lg rounded-2xl border border-slate-200 bg-white p-6 shadow-lg dark:border-slate-700 dark:bg-slate-800">
         <h1 className="text-2xl font-bold text-blue-700 dark:text-blue-400">Welcome to ShopDesk</h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {step === 0 ? 'Set up your own shop in about a minute — or explore with demo data first.' : stepsLabel}
+          Set up your own shop in about a minute.
         </p>
-        {step > 0 && (
-          <p className="mt-3 text-xs font-medium text-slate-400">
-            Step {step} of 3 — {['', 'Your shop', 'Partners', 'Your logins'][step]}
-          </p>
-        )}
-
-        {step === 0 && (
-          <div className="mt-5 space-y-3">
-            <button
-              onClick={() => setStep(1)}
-              disabled={busy}
-              className="w-full rounded-xl border-2 border-blue-600 bg-blue-50 p-4 text-left hover:bg-blue-100 dark:bg-blue-900/20 dark:hover:bg-blue-900/40"
-            >
-              <p className="font-semibold text-slate-800 dark:text-slate-100">Set up my shop</p>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Clean start. Enter your shop name, partners and logins — no demo data. Best for real use.
-              </p>
-            </button>
-            <button
-              onClick={loadDemo}
-              disabled={busy}
-              className="w-full rounded-xl border border-slate-300 bg-white p-4 text-left hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:hover:bg-slate-700"
-            >
-              <p className="font-semibold text-slate-800 dark:text-slate-100">Explore with demo data</p>
-              <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                Loads a sample shop (Naimat Kiryana Store) with products, sales and customers to practise with.
-                Sign in afterwards with <b>admin / admin123</b>.
-              </p>
-            </button>
-            {busy && <p className="text-center text-sm text-slate-400">Loading demo data…</p>}
-          </div>
-        )}
+        <p className="mt-3 text-xs font-medium text-slate-400">
+          Step {step} of 3 — {stepsLabel}
+        </p>
 
         {step === 1 && (
           <div className="mt-5 space-y-3">
@@ -303,23 +259,21 @@ export default function Setup({ onDone }: { onDone: (u: Session | 'demo') => voi
 
         {err && <p className="mt-4 text-sm text-red-600">{err}</p>}
 
-        {step > 0 && (
-          <div className="mt-5 flex gap-2">
-            <Btn variant="secondary" onClick={() => { setErr(''); setStep((step - 1) as 0 | 1 | 2); }} disabled={busy}>
+        <div className="mt-5 flex gap-2">
+          {step > 1 && (
+            <Btn variant="secondary" onClick={() => { setErr(''); setStep((step - 1) as 1 | 2); }} disabled={busy}>
               Back
             </Btn>
-            {step < 3 ? (
-              <Btn className="flex-1" onClick={next} disabled={busy}>Continue</Btn>
-            ) : (
-              <Btn className="flex-1" onClick={finish} disabled={busy}>{busy ? 'Setting up…' : 'Finish setup'}</Btn>
-            )}
-          </div>
-        )}
-        {step === 0 && (
-          <p className="mt-4 text-center text-[11px] text-slate-400">
-            Your data stays on your own computer. Nothing is uploaded anywhere.
-          </p>
-        )}
+          )}
+          {step < 3 ? (
+            <Btn className="flex-1" onClick={next} disabled={busy}>Continue</Btn>
+          ) : (
+            <Btn className="flex-1" onClick={finish} disabled={busy}>{busy ? 'Setting up…' : 'Finish setup'}</Btn>
+          )}
+        </div>
+        <p className="mt-4 text-center text-[11px] text-slate-400">
+          Your data stays on your own computer. Nothing is uploaded anywhere.
+        </p>
       </div>
     </div>
   );

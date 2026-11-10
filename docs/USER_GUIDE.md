@@ -5,36 +5,20 @@ All amounts are in Pakistani Rupees (Rs).
 
 ## 1. Getting started
 
-**First run — set up your shop.** The first time ShopDesk opens, it asks
-how you want to start:
+**First run — set up your shop.** The first time you open ShopDesk you
+will see the setup screen. Enter your shop name, address and phone, add
+one or two partners with their profit shares (they must add up to 100%),
+then create your logins: an admin login with full access, and optionally
+a second login for the working partner. Every user creates their own
+account — there is no demo data and no shared password.
 
-- **Set up my shop** — the clean start. Three short steps: your shop name,
-  address and phone; your partners and their profit shares (they must add
-  up to 100%); and your logins. Nothing is pre-filled — no demo products,
-  no demo sales. When you finish, you sign in with the owner login you
-  just created.
-- **Explore with demo data** — loads a sample shop (Naimat Kiryana Store)
-  with products, sales and customers to practise with. Sign in afterwards
-  with **admin / admin123** (owner) or **partner / partner123** (working
-  partner). Change both passwords in **Settings → Users** before real use.
+**Sign in.** Use the username and password you created during setup.
 
-**Tutorial.** After setup, the app opens on the **Tutorial** page — eight
-short steps that walk you through your first week: adding products, your
-first purchase and sale, expenses, profit, closing the month, and backups.
-You can open it any time from the sidebar.
-
-**Sign in.** Use the username and password created during setup. There are
-two roles:
-
-- **Owner / admin** — full access to everything, including Partnership,
-  Backup and Settings.
+- **Admin** — full access to everything, including Partnership, Backup and
+  Settings.
 - **Working partner** — can sell, manage stock and purchases, record
   expenses and customers, and see daily reports. Cannot change partners,
   close months, or restore backups.
-
-If you chose demo data, the two logins are **admin / admin123** and
-**partner / partner123**. If you set up your own shop, the passwords are
-the ones you chose — write them down.
 
 ## 2. Daily selling (Point of Sale)
 
@@ -198,4 +182,4 @@ CSV from the same page.
 - **Lost password** — there is no password reset inside the app by design.
   The admin can change any user's password in **Settings → Users**. If the
   admin password itself is lost, the database must be reset by someone
-  technical — afterwards you will go through the setup screen again.
+  technical (all shop data will need to be re-entered).

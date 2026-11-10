@@ -60,6 +60,7 @@ export default function App() {
   const [dark, setDark] = useState(false);
   const [shopName, setShopName] = useState('ShopDesk');
   const [setup, setSetup] = useState<{ needsSetup: boolean; demoMode: boolean } | null>(null);
+  const [dbError, setDbError] = useState<string | null>(null);
   const toast = useToast();
 
   useEffect(() => {
@@ -67,7 +68,11 @@ export default function App() {
   }, [dark]);
 
   useEffect(() => {
-    api.setupStatus().then(setSetup).catch(() => setSetup({ needsSetup: false, demoMode: false }));
+    // A setup-status failure means the database itself is broken (e.g. its
+    // tables were never created). Never silently fall through to the Login
+    // screen in that case — no login can succeed on an empty database, and
+    // the raw error looks like a wrong password.
+    api.setupStatus().then(setSetup).catch((e) => setDbError(e instanceof Error ? e.message : 'Could not check setup status'));
   }, []);
 
   useEffect(() => {
@@ -75,6 +80,20 @@ export default function App() {
   }, [user]);
 
   if (!user) {
+    if (dbError) {
+      return (
+        <div className="flex h-full items-center justify-center bg-slate-100 dark:bg-slate-900">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-lg dark:border-slate-700 dark:bg-slate-800">
+            <h1 className="text-2xl font-bold text-blue-700 dark:text-blue-400">ShopDesk</h1>
+            <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
+              The shop database could not be set up. Please close ShopDesk and open it again. If this keeps
+              happening, reinstall ShopDesk — reinstalling does not delete your shop data.
+            </p>
+            <p className="mt-3 text-xs text-slate-400">{dbError}</p>
+          </div>
+        </div>
+      );
+    }
     if (setup === null) {
       return (
         <div className="flex h-full items-center justify-center bg-slate-100 dark:bg-slate-900">
@@ -86,17 +105,13 @@ export default function App() {
       return (
         <Setup
           onDone={(u) => {
-            if (u === 'demo') {
-              setSetup({ needsSetup: false, demoMode: true });
-            } else {
-              setUser(u);
-              setPage('tutorial');
-            }
+            setUser(u);
+            setPage('tutorial');
           }}
         />
       );
     }
-    return <Login demoMode={setup.demoMode} onLogin={setUser} />;
+    return <Login onLogin={setUser} />;
   }
 
   const visibleNav = NAV.filter((n) => !n.adminOnly || user.role === 'ADMIN');
@@ -165,7 +180,7 @@ export default function App() {
   );
 }
 
-function Login({ onLogin, demoMode }: { onLogin: (u: Session) => void; demoMode: boolean }) {
+function Login({ onLogin }: { onLogin: (u: Session) => void }) {
   const [username, setUsername] = useState('admin');
   const [password, setPassword] = useState('');
   const [err, setErr] = useState('');
@@ -179,7 +194,12 @@ function Login({ onLogin, demoMode }: { onLogin: (u: Session) => void; demoMode:
       const u = await api.login(username, password);
       onLogin(u);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Login failed');
+      const msg = e instanceof Error ? e.message : 'Login failed';
+      setErr(
+        msg.includes('does not exist in the current database')
+          ? 'The shop database was not set up correctly. Please restart ShopDesk — if this keeps happening, reinstall it.'
+          : msg,
+      );
     } finally {
       setBusy(false);
     }
@@ -200,15 +220,7 @@ function Login({ onLogin, demoMode }: { onLogin: (u: Session) => void; demoMode:
           {err && <p className="text-sm text-red-600">{err}</p>}
           <Btn type="submit" className="w-full" disabled={busy}>{busy ? 'Signing in…' : 'Sign in'}</Btn>
         </div>
-        {demoMode && (
-          <p className="mt-4 rounded-lg bg-amber-50 p-3 text-xs text-amber-800 dark:bg-amber-900/30 dark:text-amber-200">
-            Demo data: sign in with <b>admin / admin123</b> (owner) or <b>partner / partner123</b> (working partner).
-            This is sample data for practice — change both passwords in Settings → Users before real use.
-          </p>
-        )}
-        {!demoMode && (
-          <p className="mt-4 text-center text-[11px] text-slate-400">Sign in with the account created during setup.</p>
-        )}
+        <p className="mt-4 text-center text-[11px] text-slate-400">Sign in with the account created during setup.</p>
       </form>
     </div>
   );

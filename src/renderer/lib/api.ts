@@ -18,7 +18,6 @@ export const api = {
   userCount: () => call<number>('auth:userCount'),
   setupStatus: () => call<{ needsSetup: boolean; demoMode: boolean }>('setup:status'),
   setupComplete: (d: unknown) => call('setup:complete', d),
-  setupLoadDemo: () => call('setup:loadDemo'),
   listUsers: () => call<Record<string, unknown>[]>('auth:listUsers'),
   createUser: (d: unknown) => call('auth:createUser', d),
   settingsGet: () => call<Record<string, unknown>>('settings:get'),

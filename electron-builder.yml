@@ -25,7 +25,13 @@ asarUnpack:
   # binaries; they must live outside the asar or Node cannot load them.
   - "**/dist-electron/main/generated-prisma/**/*"
 extraResources:
-  - from: resources
+  # Copy the migration FILES into resources/migrations. (Do NOT copy the
+  # whole resources/ folder here: it contains a migrations/ subfolder, and
+  # that nests the file one level too deep — resources/migrations/migrations/
+  # — where runMigrations() never looks. That is how v1.1.0/v1.1.1 shipped
+  # an empty database on Windows: the app opened, login failed with
+  # "table main.User does not exist".)
+  - from: resources/migrations
     to: migrations
 win:
   target:

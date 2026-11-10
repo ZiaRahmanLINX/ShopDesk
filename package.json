@@ -1,6 +1,6 @@
 {
   "name": "shopdesk",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "ShopDesk \u2014 Windows desktop shop management & partnership accounting (PKR)",
   "author": "ShopDesk",
   "license": "MIT",
@@ -20,7 +20,8 @@
     "seed": "tsx scripts/seed.ts",
     "test:scenarios": "tsx tests/scenarios.ts",
     "test:setup": "tsx tests/setup.ts",
-    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit",
+    "test:migrations": "tsx tests/migrations.ts"
   },
   "dependencies": {
     "@prisma/client": "^6.8.2",

@@ -1,7 +1,7 @@
 // ShopDesk — first-run setup tests.
 // Verifies the Setup wizard's backend: clean setup creates the shop,
-// partners, logins and base structure; a second setup is refused; demo
-// mode loads the sample shop. Run: npm run test:setup
+// partners, logins and base structure; a second setup is refused; bad
+// shares are rejected. There is no demo mode anymore. Run: npm run test:setup
 import fs from 'node:fs';
 import path from 'node:path';
 import { PrismaClient } from '../src/main/generated-prisma';
@@ -84,23 +84,7 @@ async function main() {
   check('second setup refused', refused, true);
   await db.$disconnect();
 
-  // ---- 4. Demo mode on a fresh database ----
-  db = await freshDb();
-  await setup.loadDemoSetup();
-  check('demo: users created', await db.user.count(), 2);
-  check('demo: products loaded', await db.product.count(), 14);
-  check('demo: needsSetup false', (await setup.getSetupStatus()).needsSetup, false);
-  check('demo: demoMode true', (await setup.getSetupStatus()).demoMode, true);
-  let demoRefused = false;
-  try {
-    await setup.loadDemoSetup();
-  } catch {
-    demoRefused = true;
-  }
-  check('demo: second load refused', demoRefused, true);
-  await db.$disconnect();
-
-  // ---- 5. Bad shares are rejected ----
+  // ---- 4. Bad shares are rejected ----
   db = await freshDb();
   let badShares = false;
   try {

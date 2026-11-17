@@ -23,8 +23,8 @@ export default function ProfitLoss() {
   );
 
   const assets = bs?.assets as { cash: number; inventory: number; receivables: number; total: number } | undefined;
-  const liab = bs?.liabilities as { supplierPayables: number; partnerLoans: number; total: number } | undefined;
-  const eq = bs?.equity as { partnerCapital: number; reserve: number; total: number } | undefined;
+  const liab = bs?.liabilities as { supplierPayables: number; total: number } | undefined;
+  const eq = bs?.equity as { ownerCapital: number; total: number } | undefined;
 
   return (
     <div className="space-y-4">
@@ -52,10 +52,7 @@ export default function ProfitLoss() {
                 ))}
                 <Row label="Total expenses" value={Number(pl.expenses)} bold tone="bad" />
                 <Row label="Net profit" value={Number(pl.netProfit)} bold tone={Number(pl.netProfit) >= 0 ? 'good' : 'bad'} />
-                <Row label={`Business reserve (${Number(pl.reservePct)}%)`} value={Number(pl.reserveAmount)} />
-                <Row label="Distributable profit" value={Number(pl.distributable)} bold />
-                <Row label="Capital Partner share (50%)" value={Number(pl.partner1Share)} />
-                <Row label="Working Partner share (50%)" value={Number(pl.partner2Share)} />
+                <Row label="Retained earnings — profit kept in the business" value={Number(pl.netProfit)} bold tone={Number(pl.netProfit) >= 0 ? 'good' : 'bad'} />
               </div>
             )}
           </div>
@@ -76,10 +73,8 @@ export default function ProfitLoss() {
             <div>
               <p className="mb-1 text-xs font-medium uppercase tracking-wide text-slate-400">Liabilities & Equity</p>
               <Row label="Supplier payables" value={liab?.supplierPayables || 0} />
-              <Row label="Partner loans" value={liab?.partnerLoans || 0} />
               <Row label="Total liabilities" value={liab?.total || 0} bold />
-              <Row label="Partner capital" value={eq?.partnerCapital || 0} />
-              <Row label="Business reserve" value={eq?.reserve || 0} />
+              <Row label="Owner capital" value={eq?.ownerCapital || 0} />
               <Row label="Total equity" value={eq?.total || 0} bold />
               <Row label="Retained earnings (balancing figure)" value={Number(bs.retainedEarnings)} bold />
             </div>

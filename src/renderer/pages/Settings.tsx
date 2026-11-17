@@ -1,11 +1,12 @@
+// Settings — single owner edition. Shop details, the owner account
+// (name + password change), and about. One login only.
 import { useEffect, useState } from 'react';
 import { api } from '../lib/api';
 import { Btn, Card, CardHeader, Field, Input, Select, useToast } from '../components/ui';
 
 export default function Settings() {
-  const [shop, setShop] = useState({ shopName: '', shopAddress: '', shopPhone: '', shopEmail: '', thankYouNote: '', reservePct: 0, thermalWidth: '80' as '58' | '80' });
-  const [users, setUsers] = useState<Record<string, unknown>[]>([]);
-  const [newUser, setNewUser] = useState({ name: '', username: '', password: '', role: 'WORKING_PARTNER' as 'ADMIN' | 'WORKING_PARTNER' });
+  const [shop, setShop] = useState({ shopName: '', shopAddress: '', shopPhone: '', shopEmail: '', thankYouNote: '', thermalWidth: '80' as '58' | '80' });
+  const [owner, setOwner] = useState<Record<string, unknown> | null>(null);
   const [pw, setPw] = useState({ old: '', next: '', confirm: '' });
   const toast = useToast();
 
@@ -16,10 +17,9 @@ export default function Settings() {
       shopPhone: String(s.shopPhone || ''),
       shopEmail: String(s.shopEmail || ''),
       thankYouNote: String(s.thankYouNote || ''),
-      reservePct: Number(s.reservePct || 0),
       thermalWidth: (s.thermalWidth as '58' | '80') || '80',
     })).catch(() => undefined);
-    api.listUsers().then(setUsers).catch(() => undefined);
+    api.listUsers().then((u) => setOwner(u[0] || null)).catch(() => undefined);
   };
   useEffect(load, []);
 
@@ -32,16 +32,14 @@ export default function Settings() {
     }
   };
 
-  const addUser = async () => {
-    if (!newUser.name.trim() || !newUser.username.trim() || newUser.password.length < 6) {
-      toast.show('Name, username and a password of 6+ characters are required', 'err');
-      return;
-    }
+  const changePassword = async () => {
+    if (!owner) { toast.show('Owner account not found', 'err'); return; }
+    if (pw.next.length < 6) { toast.show('New password must be at least 6 characters', 'err'); return; }
+    if (pw.next !== pw.confirm) { toast.show('New passwords do not match', 'err'); return; }
     try {
-      await api.createUser(newUser);
-      setNewUser({ name: '', username: '', password: '', role: 'WORKING_PARTNER' });
-      load();
-      toast.show('User created');
+      await api.changePassword({ userId: String(owner.id), oldPassword: pw.old, newPassword: pw.next });
+      setPw({ old: '', next: '', confirm: '' });
+      toast.show('Password changed');
     } catch (e) {
       toast.show(e instanceof Error ? e.message : 'Failed', 'err');
     }
@@ -65,46 +63,35 @@ export default function Settings() {
               <option value="80">80mm</option>
             </Select>
           </Field>
-          <Field label="Default business reserve (%)" hint="Applied to each month's net profit at closing. 0 = no reserve.">
-            <Input type="number" min={0} max={100} value={shop.reservePct} onChange={(e) => setShop({ ...shop, reservePct: Math.min(100, Math.max(0, Number(e.target.value) || 0)) })} />
-          </Field>
         </div>
         <div className="flex justify-end px-4 pb-4"><Btn onClick={saveShop}>Save shop settings</Btn></div>
       </Card>
 
       <Card>
-        <CardHeader title="Users & roles" sub="Admin: full access, approves distributions, backup/restore. Working Partner: POS, inventory, purchases, expenses, customers, daily reports." />
-        <div className="p-4">
-          <table className="w-full text-sm">
-            <thead><tr className="text-left text-xs text-slate-400"><th className="py-1">Name</th><th className="py-1">Username</th><th className="py-1">Role</th><th className="py-1">Active</th></tr></thead>
-            <tbody>
-              {users.map((u) => (
-                <tr key={String(u.id)} className="border-t border-slate-100 dark:border-slate-700">
-                  <td className="py-2 font-medium">{String(u.name)}</td>
-                  <td className="py-2">{String(u.username)}</td>
-                  <td className="py-2">{String(u.role)}</td>
-                  <td className="py-2">{u.isActive ? 'Yes' : 'No'}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="mt-4 grid grid-cols-4 gap-2">
-            <Input placeholder="Full name" value={newUser.name} onChange={(e) => setNewUser({ ...newUser, name: e.target.value })} />
-            <Input placeholder="Username" value={newUser.username} onChange={(e) => setNewUser({ ...newUser, username: e.target.value })} />
-            <Input placeholder="Password (6+ chars)" type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} />
-            <div className="flex gap-2">
-              <Select value={newUser.role} onChange={(e) => setNewUser({ ...newUser, role: e.target.value as never })}>
-                <option value="WORKING_PARTNER">Working Partner</option>
-                <option value="ADMIN">Admin / Owner</option>
-              </Select>
-              <Btn onClick={addUser}>Add user</Btn>
-            </div>
+        <CardHeader title="Owner account" sub="There is one login — yours. It has full access to everything." />
+        <div className="space-y-3 p-4">
+          <div className="flex justify-between text-sm">
+            <span className="text-slate-500">Owner</span>
+            <strong>{owner ? `${String(owner.name)} (${String(owner.username)})` : '—'}</strong>
           </div>
+          <p className="text-sm font-medium text-slate-600 dark:text-slate-300">Change password</p>
+          <Field label="Current password">
+            <Input type="password" value={pw.old} onChange={(e) => setPw({ ...pw, old: e.target.value })} />
+          </Field>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="New password (6+ characters)">
+              <Input type="password" value={pw.next} onChange={(e) => setPw({ ...pw, next: e.target.value })} />
+            </Field>
+            <Field label="Repeat new password">
+              <Input type="password" value={pw.confirm} onChange={(e) => setPw({ ...pw, confirm: e.target.value })} />
+            </Field>
+          </div>
+          <div className="flex justify-end"><Btn onClick={changePassword}>Change password</Btn></div>
         </div>
       </Card>
 
       <Card>
-        <CardHeader title="About ShopDesk" sub="Version 1.1.2 — offline-first, local SQLite database" />
+        <CardHeader title="About ShopDesk Owner" sub="Version 1.0.0 — offline-first, local SQLite database" />
         <div className="space-y-1 p-4 text-sm text-slate-500">
           <p>Money is stored in integer paisa — never floating point. Stock cost uses FIFO lots, so historical purchase prices are never rewritten.</p>
           <p>Your database lives in the app's user data folder and is backed up daily (Backup & Restore). Closing a month locks it against silent changes.</p>

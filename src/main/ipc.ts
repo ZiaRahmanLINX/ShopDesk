@@ -1,12 +1,12 @@
 // IPC layer: typed, Zod-validated handlers. Renderer never touches Node/SQL
 // directly — every call goes through here with an explicit allow-list.
-import { ipcMain, BrowserWindow, shell } from 'electron';
+import { ipcMain, BrowserWindow, shell, app } from 'electron';
 import { getPrisma, getShopSettings, setSetting, runMigrations } from './db';
 import * as catalog from './services/catalog';
 import * as purchases from './services/purchases';
 import * as sales from './services/sales';
 import * as finance from './services/finance';
-import * as partners from './services/partners';
+import * as owner from './services/owner';
 import * as closing from './services/closing';
 import * as reports from './services/reports';
 import * as backup from './services/backup';
@@ -132,39 +132,18 @@ const handlers: Record<string, Handler> = {
     return finance.dailyCashCount(d.accountId, d.actualPaisa, d.note, uid);
   },
 
-  // partners
-  'partners:list': async () => partners.listPartners(),
-  'partners:create': async (p, uid) => partners.createPartner(p as never, uid),
-  'partners:updateShare': async (p, uid) => {
-    const d = p as { partnerId: string; pct: number };
-    return partners.updatePartnerShare(d.partnerId, d.pct, uid);
+  // owner capital & drawings
+  'owner:listCapital': async () => owner.listCapital(),
+  'owner:addCapital': async (p, uid) => {
+    const d = p as { amount: number; kind: 'INITIAL' | 'ADDITIONAL'; note?: string; cashAccountId?: string; method: string };
+    return owner.addCapital(d.amount, d.kind, d.note, d.cashAccountId, d.method, uid);
   },
-  'partners:addCapital': async (p, uid) => {
-    const d = p as { partnerId: string; amount: number; kind: 'INITIAL' | 'ADDITIONAL'; note?: string; cashAccountId?: string; method: string };
-    return partners.addCapital(d.partnerId, d.amount, d.kind, d.note, d.cashAccountId, d.method, uid);
+  'owner:listDrawings': async () => owner.listDrawings(),
+  'owner:addDrawing': async (p, uid) => {
+    const d = p as { amount: number; note?: string; cashAccountId?: string; method: string };
+    return owner.addDrawing(d.amount, d.note, d.cashAccountId, d.method, uid);
   },
-  'partners:addLoan': async (p, uid) => {
-    const d = p as { partnerId: string; amount: number; note?: string; cashAccountId?: string; method: string };
-    return partners.addLoan(d.partnerId, d.amount, d.note, d.cashAccountId, d.method, uid);
-  },
-  'partners:repayLoan': async (p, uid) => {
-    const d = p as { loanId: string; amount: number; cashAccountId?: string; method: string };
-    return partners.repayLoan(d.loanId, d.amount, d.cashAccountId, d.method, uid);
-  },
-  'partners:addWithdrawal': async (p, uid) => {
-    const d = p as { partnerId: string; amount: number; note?: string; cashAccountId?: string; method: string };
-    return partners.addWithdrawal(d.partnerId, d.amount, d.note, d.cashAccountId, d.method, currentUserId, uid);
-  },
-  'partners:statement': async (p) => partners.partnerStatement((p as { id: string }).id),
-  'partners:reserveBalance': async () => partners.reserveBalance(),
-  'partners:useReserve': async (p, uid) => {
-    const d = p as { amount: number; note: string };
-    return partners.useReserve(d.amount, d.note, uid);
-  },
-  'partners:payDistribution': async (p, uid) => {
-    const d = p as { distributionId: string; cashAccountId?: string; method: string };
-    return partners.payDistribution(d.distributionId, d.cashAccountId, d.method, uid);
-  },
+  'owner:summary': async () => owner.ownerSummary(),
 
   // closing
   'closing:preview': async (p) => closing.closePreview((p as { month: string }).month),
@@ -191,7 +170,7 @@ const handlers: Record<string, Handler> = {
     await shell.openPath((p as { path: string }).path);
     return { ok: true };
   },
-  'app:version': async () => ({ version: '1.1.2' }),
+  'app:version': async () => ({ version: app.getVersion() }),
 };
 
 export function registerIpc(mainWindow: BrowserWindow): void {

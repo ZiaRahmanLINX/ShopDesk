@@ -3,13 +3,9 @@
 
 export type ID = string;
 
-export type Role = 'ADMIN' | 'WORKING_PARTNER';
-
 export type AccountKind = 'CASH' | 'BANK' | 'EASYPAISA' | 'JAZZCASH' | 'OTHER';
 
 export type PaymentMethod = 'CASH' | 'BANK' | 'EASYPAISA' | 'JAZZCASH' | 'CREDIT' | 'SPLIT';
-
-export type PartnerType = 'CAPITAL' | 'WORKING';
 
 export type TxnStatus = 'COMPLETED' | 'REVERSED' | 'CANCELLED';
 
@@ -43,18 +39,6 @@ export interface DashboardStats {
   expenseByCategory: Array<{ category: string; amount: number }>;
 }
 
-export interface PartnerSummary {
-  id: string;
-  name: string;
-  type: PartnerType;
-  phone: string | null;
-  capitalBalance: number; // paisa
-  loanBalance: number; // paisa (positive = partner lent money to business, business owes partner)
-  withdrawalsTotal: number;
-  profitEntitlement: number; // paisa, from distributions this period
-  profitSharePct: number;
-}
-
 export interface MonthlyClosePreview {
   month: string; // YYYY-MM
   netSales: number;
@@ -62,13 +46,16 @@ export interface MonthlyClosePreview {
   grossProfit: number;
   expenses: number;
   netProfit: number;
-  reservePct: number;
-  reserveAmount: number;
-  distributable: number;
-  partner1Share: number;
-  partner2Share: number;
   closingInventoryValue: number;
   customerOutstanding: number;
   supplierOutstanding: number;
   cashBalance: number;
+}
+
+export interface BalanceSheet {
+  assets: { cash: number; inventory: number; receivables: number; total: number }; // paisa
+  liabilities: { supplierPayables: number; total: number }; // paisa
+  equity: { ownerCapital: number; total: number }; // paisa
+  retainedEarnings: number; // paisa, balancing figure
+  balanced: number; // paisa, assets - liabilities - equity (== retainedEarnings)
 }

@@ -4,9 +4,9 @@
 # user-approved notes — the CI workflow only uploads the built files as
 # artifacts.
 publish: null
-appId: com.shopdesk.app
-productName: ShopDesk
-copyright: Copyright © 2026 ShopDesk
+appId: com.shopdesk.owner
+productName: ShopDesk Owner
+copyright: Copyright © 2026 ShopDesk Owner
 directories:
   output: release
   buildResources: build
@@ -50,6 +50,6 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: ShopDesk
+  shortcutName: ShopDesk Owner
 portable:
   artifactName: ${productName}-${version}-Portable.${ext}

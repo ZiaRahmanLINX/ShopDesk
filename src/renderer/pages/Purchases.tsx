@@ -10,7 +10,6 @@ export default function Purchases() {
   const [list, setList] = useState<Record<string, unknown>[]>([]);
   const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
-  const [partners, setPartners] = useState<{ id: string; name: string }[]>([]);
   const [accounts, setAccounts] = useState<{ id: string; name: string; kind: string }[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [detail, setDetail] = useState<Record<string, unknown> | null>(null);
@@ -20,7 +19,6 @@ export default function Purchases() {
     api.purchases({ limit: 100 }).then(setList).catch(() => undefined);
     api.suppliers().then((s) => setSuppliers(s as unknown as { id: string; name: string }[])).catch(() => undefined);
     api.products({}).then((p) => setProducts(p as unknown as Product[])).catch(() => undefined);
-    api.partners().then((p) => setPartners(p as unknown as { id: string; name: string }[])).catch(() => undefined);
     api.cashAccounts().then((a) => setAccounts(a as unknown as { id: string; name: string; kind: string }[])).catch(() => undefined);
   };
   useEffect(load, []);
@@ -55,7 +53,7 @@ export default function Purchases() {
       </Card>
       {showForm && (
         <PurchaseForm
-          suppliers={suppliers} products={products} partners={partners} accounts={accounts}
+          suppliers={suppliers} products={products} accounts={accounts}
           onClose={() => setShowForm(false)}
           onSaved={() => { setShowForm(false); load(); toast.show('Purchase recorded — stock updated'); }}
         />
@@ -66,10 +64,9 @@ export default function Purchases() {
   );
 }
 
-function PurchaseForm({ suppliers, products, partners, accounts, onClose, onSaved }: {
+function PurchaseForm({ suppliers, products, accounts, onClose, onSaved }: {
   suppliers: { id: string; name: string }[];
   products: Product[];
-  partners: { id: string; name: string }[];
   accounts: { id: string; name: string; kind: string }[];
   onClose: () => void;
   onSaved: () => void;
@@ -82,8 +79,7 @@ function PurchaseForm({ suppliers, products, partners, accounts, onClose, onSave
   const [transport, setTransport] = useState('');
   const [paid, setPaid] = useState('');
   const [method, setMethod] = useState<'CASH' | 'BANK' | 'EASYPAISA' | 'JAZZCASH' | 'CREDIT'>('CASH');
-  const [funding, setFunding] = useState<'BUSINESS_CASH' | 'PARTNER_CAPITAL' | 'PARTNER_LOAN' | 'SUPPLIER_CREDIT'>('BUSINESS_CASH');
-  const [partnerId, setPartnerId] = useState('');
+  const [funding, setFunding] = useState<'BUSINESS_CASH' | 'SUPPLIER_CREDIT'>('BUSINESS_CASH');
   const [accountId, setAccountId] = useState('');
   const [err, setErr] = useState('');
   const toast = useToast();
@@ -111,7 +107,6 @@ function PurchaseForm({ suppliers, products, partners, accounts, onClose, onSave
         paidAmount: parseRupees(paid) || 0,
         paymentMethod: method,
         fundingSource: funding,
-        partnerId: (funding === 'PARTNER_CAPITAL' || funding === 'PARTNER_LOAN') ? partnerId : null,
         cashAccountId: accountId || null,
         note: null,
       });
@@ -179,22 +174,12 @@ function PurchaseForm({ suppliers, products, partners, accounts, onClose, onSave
           </Field>
         </div>
 
-        <Field label="Funding source" hint="Mid-month stock: pay from business cash, partner capital, a partner loan, or supplier credit.">
+        <Field label="Funding source" hint="Where the money came from: business cash, or supplier credit (pay later).">
           <Select value={funding} onChange={(e) => setFunding(e.target.value as never)}>
             <option value="BUSINESS_CASH">Existing business cash</option>
-            <option value="PARTNER_CAPITAL">Additional capital from a partner</option>
-            <option value="PARTNER_LOAN">Temporary loan from a partner</option>
             <option value="SUPPLIER_CREDIT">Supplier credit (pay later)</option>
           </Select>
         </Field>
-        {(funding === 'PARTNER_CAPITAL' || funding === 'PARTNER_LOAN') && (
-          <Field label="Partner">
-            <Select value={partnerId} onChange={(e) => setPartnerId(e.target.value)}>
-              <option value="">— Select partner —</option>
-              {partners.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-            </Select>
-          </Field>
-        )}
 
         <div className="flex justify-between border-t border-slate-100 pt-3 text-sm dark:border-slate-700">
           <span>Subtotal {formatPKR(subtotal)}</span>

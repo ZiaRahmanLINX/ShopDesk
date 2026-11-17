@@ -1,4 +1,5 @@
-// Auth: local users, scrypt-hashed passwords, roles.
+// Auth: local users, bcrypt-hashed passwords. Single-owner shop —
+// there is no role: the one owner account is the only login.
 import bcrypt from 'bcryptjs';
 import { getPrisma, audit } from '../db';
 
@@ -6,7 +7,6 @@ export interface SessionUser {
   id: string;
   name: string;
   username: string;
-  role: 'ADMIN' | 'WORKING_PARTNER';
 }
 
 export async function userCount(): Promise<number> {
@@ -20,11 +20,11 @@ export async function login(username: string, password: string): Promise<Session
   if (!user || !user.isActive) throw new Error('Invalid username or password');
   const ok = await bcrypt.compare(password, user.passwordHash);
   if (!ok) throw new Error('Invalid username or password');
-  return { id: user.id, name: user.name, username: user.username, role: user.role as SessionUser['role'] };
+  return { id: user.id, name: user.name, username: user.username };
 }
 
 export async function createUser(
-  input: { name: string; username: string; password: string; role: 'ADMIN' | 'WORKING_PARTNER' },
+  input: { name: string; username: string; password: string },
   actorId: string | null,
 ) {
   if (input.password.length < 6) throw new Error('Password must be at least 6 characters');
@@ -33,16 +33,16 @@ export async function createUser(
   if (existing) throw new Error('Username already exists');
   const hash = await bcrypt.hash(input.password, 10);
   const u = await db.user.create({
-    data: { name: input.name.trim(), username: input.username.trim(), passwordHash: hash, role: input.role },
+    data: { name: input.name.trim(), username: input.username.trim(), passwordHash: hash },
   });
-  await audit(actorId, 'USER_CREATED', 'User', u.id, { username: input.username, role: input.role });
-  return { id: u.id, name: u.name, username: u.username, role: u.role };
+  await audit(actorId, 'USER_CREATED', 'User', u.id, { username: input.username });
+  return { id: u.id, name: u.name, username: u.username };
 }
 
 export async function listUsers() {
   const db = getPrisma();
   return db.user.findMany({
-    select: { id: true, name: true, username: true, role: true, isActive: true, createdAt: true },
+    select: { id: true, name: true, username: true, isActive: true, createdAt: true },
     orderBy: { createdAt: 'asc' },
   });
 }

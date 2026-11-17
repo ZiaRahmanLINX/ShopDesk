@@ -16,71 +16,40 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ---------- Users & roles ----------
+// ---------- Users ----------
 model User {
   id           String   @id @default(cuid())
   name         String
   username     String   @unique
   passwordHash String
-  role         String   @default("WORKING_PARTNER") // ADMIN | WORKING_PARTNER
   isActive     Boolean  @default(true)
   createdAt    DateTime @default(now())
   auditLogs    AuditLog[]
 }
 
-// ---------- Partners ----------
-model Partner {
-  id             String              @id @default(cuid())
-  name           String
-  type           String              // CAPITAL | WORKING
-  phone          String?
-  profitSharePct Int                 @default(50)
-  capitalBalance Int                 @default(0) // paisa, denormalised, maintained transactionally
-  loanBalance    Int                 @default(0) // paisa owed BY business TO partner
-  isActive       Boolean             @default(true)
-  createdAt      DateTime            @default(now())
-  capitals       PartnerCapital[]
-  loans          PartnerLoan[]
-  withdrawals    PartnerWithdrawal[]
-  distributions  ProfitDistribution[]
-}
-
-model PartnerCapital {
-  id        String   @id @default(cuid())
-  partnerId String
-  partner   Partner  @relation(fields: [partnerId], references: [id])
-  kind      String   // INITIAL | ADDITIONAL
-  amount    Int // paisa, always positive
-  date      DateTime @default(now())
-  note      String?
-  cashAccountId String?
-  createdAt DateTime @default(now())
-}
-
-model PartnerLoan {
-  id           String   @id @default(cuid())
-  partnerId    String
-  partner      Partner  @relation(fields: [partnerId], references: [id])
-  amount       Int // paisa borrowed by business
-  repaidAmount Int      @default(0)
-  status       String   @default("OPEN") // OPEN | PARTIAL | REPAID
-  date         DateTime @default(now())
-  note         String?
-  cashAccountId String?
-  createdAt    DateTime @default(now())
-}
-
-model PartnerWithdrawal {
+// ---------- Owner capital & drawings ----------
+model OwnerCapital {
   id            String   @id @default(cuid())
-  partnerId     String
-  partner       Partner  @relation(fields: [partnerId], references: [id])
+  kind          String   // INITIAL | ADDITIONAL
+  amount        Int // paisa, always positive
+  date          DateTime @default(now())
+  note          String?
+  cashAccountId String?
+  createdAt     DateTime @default(now())
+}
+
+model OwnerDrawing {
+  id            String   @id @default(cuid())
   amount        Int // paisa, always positive (NOT an expense)
   date          DateTime @default(now())
   note          String?
   cashAccountId String?
-  approvedById  String?
   createdAt     DateTime @default(now())
 }
+
+
+
+
 
 // ---------- Catalogue ----------
 model Category {
@@ -130,11 +99,11 @@ model Product {
 
 // ---------- Stock ----------
 model PurchaseLot {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   productId    String
-  product      Product  @relation(fields: [productId], references: [id])
-  purchaseId   String
-  purchase     Purchase @relation(fields: [purchaseId], references: [id])
+  product      Product   @relation(fields: [productId], references: [id])
+  purchaseId   String? // nullable: opening stock, adjustments and sale refunds create lots with no purchase behind them
+  purchase     Purchase? @relation(fields: [purchaseId], references: [id])
   qtyRemaining Float
   unitCost     Int // paisa per unit, frozen at purchase time — never rewritten
   createdAt    DateTime @default(now())
@@ -171,9 +140,7 @@ model Purchase {
   total         Int // paisa = subtotal - discount + transport
   paidAmount    Int            @default(0)
   paymentMethod String         @default("CASH") // CASH | BANK | EASYPAISA | JAZZCASH | CREDIT | SPLIT
-  fundingSource String         @default("BUSINESS_CASH") // BUSINESS_CASH | PARTNER_CAPITAL | PARTNER_LOAN | SUPPLIER_CREDIT
-  partnerId     String?
-  loanId        String?
+  fundingSource String         @default("BUSINESS_CASH") // BUSINESS_CASH | SUPPLIER_CREDIT
   cashAccountId String?
   status        String         @default("UNPAID") // PAID | PARTIAL | UNPAID
   note          String?
@@ -348,7 +315,7 @@ model CashTransaction {
   accountId     String
   type          String // IN | OUT | TRANSFER_IN | TRANSFER_OUT
   amount        Int // paisa, always positive; direction is in `type`
-  category      String // SALE | PURCHASE | EXPENSE | CAPITAL | LOAN | LOAN_REPAY | WITHDRAWAL | CUSTOMER_PAYMENT | SUPPLIER_PAYMENT | TRANSFER | ADJUSTMENT | DISTRIBUTION | RESERVE
+  category      String // SALE | PURCHASE | EXPENSE | OWNER_CAPITAL | OWNER_DRAWING | CUSTOMER_PAYMENT | SUPPLIER_PAYMENT | TRANSFER | ADJUSTMENT
   refType       String?
   refId         String?
   note          String?
@@ -359,30 +326,8 @@ model CashTransaction {
   @@index([accountId, date])
 }
 
-// ---------- Partnership accounting ----------
-model ProfitDistribution {
-  id            String   @id @default(cuid())
-  closingId     String
-  closing       MonthlyClosing @relation(fields: [closingId], references: [id])
-  partnerId     String
-  partner       Partner  @relation(fields: [partnerId], references: [id])
-  amount        Int // paisa
-  status        String   @default("PENDING") // PENDING | APPROVED | PAID
-  paidDate      DateTime?
-  cashAccountId String?
-  createdAt     DateTime @default(now())
-}
+// ---------- Monthly closing ----------
 
-model BusinessReserve {
-  id        String   @id @default(cuid())
-  closingId String?
-  closing   MonthlyClosing? @relation(fields: [closingId], references: [id])
-  kind      String // ADD | USE
-  amount    Int // paisa, always positive
-  date      DateTime @default(now())
-  note      String?
-  createdAt DateTime @default(now())
-}
 
 model MonthlyClosing {
   id                    String               @id @default(cuid())
@@ -394,11 +339,6 @@ model MonthlyClosing {
   grossProfit           Int                  @default(0)
   expenses              Int                  @default(0)
   netProfit             Int                  @default(0)
-  reservePct            Int                  @default(0)
-  reserveAmount         Int                  @default(0)
-  distributable         Int                  @default(0)
-  partner1Share         Int                  @default(0)
-  partner2Share         Int                  @default(0)
   closingInventoryValue Int                  @default(0)
   customerOutstanding   Int                  @default(0)
   supplierOutstanding   Int                  @default(0)
@@ -407,8 +347,6 @@ model MonthlyClosing {
   closedAt              DateTime?
   closedById            String?
   createdAt             DateTime             @default(now())
-  distributions         ProfitDistribution[]
-  reserves              BusinessReserve[]
 }
 
 // ---------- Audit & settings ----------
@@ -416,7 +354,7 @@ model AuditLog {
   id         String   @id @default(cuid())
   userId     String?
   user       User?    @relation(fields: [userId], references: [id])
-  action     String // e.g. SALE_CREATED, PRICE_CHANGED, STOCK_ADJUSTED, TXN_REVERSED, DISTRIBUTION_APPROVED, MONTH_CLOSED
+  action     String // e.g. SALE_CREATED, PRICE_CHANGED, STOCK_ADJUSTED, TXN_REVERSED, MONTH_CLOSED
   entityType String?
   entityId   String?
   details    String? // JSON

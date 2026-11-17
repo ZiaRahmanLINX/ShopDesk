@@ -239,10 +239,11 @@ export async function refundSale(
   monthIsLockedCheck(locked, sale.date);
 
   await db.$transaction(async (tx) => {
-    // Stock back — re-enter as lots at the original FIFO cost.
+    // Stock back — re-enter as lots at the original FIFO cost. No purchase
+    // behind a refund, so purchaseId stays null (a fake id violates the FK).
     for (const item of sale.items) {
       await tx.purchaseLot.create({
-        data: { productId: item.productId, purchaseId: 'REFUND', qtyRemaining: item.qty, unitCost: item.unitCost },
+        data: { productId: item.productId, purchaseId: null, qtyRemaining: item.qty, unitCost: item.unitCost },
       });
       const prod = await tx.product.findUnique({ where: { id: item.productId } });
       await tx.product.update({ where: { id: item.productId }, data: { qty: (prod?.qty ?? 0) + item.qty } });

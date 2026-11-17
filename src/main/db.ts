@@ -136,7 +136,6 @@ export interface ShopSettings {
   shopPhone: string;
   shopEmail: string;
   thankYouNote: string;
-  reservePct: number;
   currency: string;
   thermalWidth: '58' | '80';
 }
@@ -147,7 +146,6 @@ export const DEFAULT_SETTINGS: ShopSettings = {
   shopPhone: '',
   shopEmail: '',
   thankYouNote: 'Thank you for shopping with us!',
-  reservePct: 0,
   currency: 'PKR',
   thermalWidth: '80',
 };

@@ -26,9 +26,8 @@ export async function createPurchase(input: unknown, userId: string | null) {
   const total = subtotal - data.discount + data.transport;
   if (total <= 0) throw new Error('Purchase total must be greater than 0');
   if (data.paidAmount > total) throw new Error('Paid amount cannot exceed the total');
-  if (data.fundingSource === 'PARTNER_CAPITAL' || data.fundingSource === 'PARTNER_LOAN') {
-    if (!data.partnerId) throw new Error('Partner is required for partner-funded purchases');
-    if (data.paidAmount <= 0) throw new Error('Partner-funded purchase must have a paid amount');
+  if (data.fundingSource !== 'BUSINESS_CASH' && data.fundingSource !== 'SUPPLIER_CREDIT') {
+    throw new Error('Funding source must be business cash or supplier credit');
   }
 
   const accounts = await db.cashAccount.findMany();
@@ -42,7 +41,7 @@ export async function createPurchase(input: unknown, userId: string | null) {
     if (!acc) throw new Error('Cash account not found');
     if (data.fundingSource === 'BUSINESS_CASH' && acc.currentBalance < data.paidAmount) {
       throw new Error(
-        `Insufficient balance in ${acc.name} (available ${acc.currentBalance / 100}). Use partner capital, a partner loan, or supplier credit instead.`,
+        `Insufficient balance in ${acc.name} (available ${acc.currentBalance / 100}). Add owner capital or use supplier credit instead.`,
       );
     }
   }
@@ -54,76 +53,6 @@ export async function createPurchase(input: unknown, userId: string | null) {
   const status = data.paidAmount >= total ? 'PAID' : data.paidAmount > 0 ? 'PARTIAL' : 'UNPAID';
 
   const purchase = await db.$transaction(async (tx) => {
-    // Partner funding leg: money comes IN from the partner, then OUT to the supplier.
-    if (data.fundingSource === 'PARTNER_CAPITAL' && data.partnerId) {
-      await tx.partnerCapital.create({
-        data: {
-          partnerId: data.partnerId,
-          kind: 'ADDITIONAL',
-          amount: data.paidAmount,
-          date,
-          note: `Capital for purchase ${invoiceNo}`,
-          cashAccountId,
-        },
-      });
-      await tx.partner.update({
-        where: { id: data.partnerId },
-        data: { capitalBalance: { increment: data.paidAmount } },
-      });
-      if (cashAccountId) {
-        await tx.cashAccount.update({
-          where: { id: cashAccountId },
-          data: { currentBalance: { increment: data.paidAmount } },
-        });
-        await tx.cashTransaction.create({
-          data: {
-            accountId: cashAccountId,
-            type: 'IN',
-            amount: data.paidAmount,
-            category: 'CAPITAL',
-            refType: 'PURCHASE',
-            note: `Partner capital for purchase ${invoiceNo}`,
-            date,
-            createdById: userId,
-          },
-        });
-      }
-    }
-    if (data.fundingSource === 'PARTNER_LOAN' && data.partnerId) {
-      const loan = await tx.partnerLoan.create({
-        data: {
-          partnerId: data.partnerId,
-          amount: data.paidAmount,
-          date,
-          note: `Temporary loan for purchase ${invoiceNo}`,
-          cashAccountId,
-        },
-      });
-      await tx.partner.update({
-        where: { id: data.partnerId },
-        data: { loanBalance: { increment: data.paidAmount } },
-      });
-      if (cashAccountId) {
-        await tx.cashAccount.update({
-          where: { id: cashAccountId },
-          data: { currentBalance: { increment: data.paidAmount } },
-        });
-        await tx.cashTransaction.create({
-          data: {
-            accountId: cashAccountId,
-            type: 'IN',
-            amount: data.paidAmount,
-            category: 'LOAN',
-            refType: 'LOAN',
-            refId: loan.id,
-            note: `Partner loan for purchase ${invoiceNo}`,
-            date,
-            createdById: userId,
-          },
-        });
-      }
-    }
-
     const p = await tx.purchase.create({
       data: {
         supplierId: data.supplierId,
@@ -136,7 +65,6 @@ export async function createPurchase(input: unknown, userId: string | null) {
         paidAmount: data.paidAmount,
         paymentMethod: data.paymentMethod,
         fundingSource: data.fundingSource,
-        partnerId: data.partnerId || null,
         cashAccountId,
         status,
         note: data.note || null,

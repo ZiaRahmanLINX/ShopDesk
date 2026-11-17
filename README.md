@@ -1,9 +1,9 @@
-# ShopDesk — Shop Management & Partnership Accounting
+# ShopDesk Owner — Single-Owner Shop Management
 
 A complete, offline Windows desktop app for a small retail shop run by a
-two-person partnership. Built with Electron, React + TypeScript, Tailwind,
+single owner. Built with Electron, React + TypeScript, Tailwind,
 Node, SQLite, Prisma and Zod. No internet needed, no monthly fee, your data
-stays on your own computer.
+stays on your own computer. All amounts are in Pakistani Rupees (Rs).
 
 ## What it does
 
@@ -15,19 +15,20 @@ stays on your own computer.
   alerts, damage/expiry adjustments, full movement history, FIFO stock
   costing (the oldest stock is sold first, so profit is always honest).
 - **Purchases** — cash / credit / partial payments, supplier returns,
-  funding source recorded for every purchase (business cash, partner capital,
-  partner loan, supplier credit).
+  funding source recorded for every purchase (business cash or supplier
+  credit).
 - **Customers & Udhaar** — credit sales ledger, collections, statements.
 - **Suppliers** — payables ledger, payments, statements.
 - **Cashbook** — cash, bank, Easypaisa, JazzCash and other accounts,
   transfers between accounts, daily cash count with shortage/overage.
-- **Partnership** — capital and loans in **separate ledgers** (a loan is never
-  confused with capital), withdrawals (never treated as expenses), business
-  reserve, and profit distribution only after partner approval.
+- **Owner** — your capital in (initial or additional) and your drawings
+  out, with totals. Drawings are personal money — never treated as
+  expenses and never reducing profit.
 - **Monthly closing** — locks the month against silent edits, produces
-  Profit & Loss, Balance Sheet, Cash Flow, inventory valuation and the
-  distribution report. Corrections after closing are traceable adjustments
-  only — nothing is silently rewritten or deleted.
+  Profit & Loss, Balance Sheet, Cash Flow and inventory valuation. The
+  month's net profit stays in the business as retained earnings.
+  Corrections after closing are traceable adjustments only — nothing is
+  silently rewritten or deleted.
 - **Reports** — sales, products, purchases, expenses, cash flow and audit
   log, with PDF/CSV/Excel export and date filters.
 - **Backup & Restore** — automatic daily backup (30-day retention), manual
@@ -42,20 +43,21 @@ stays on your own computer.
 - All money is stored in integer paisa. No floating-point rounding.
 - Credit sales (Udhaar) are never counted as cash.
 - Transfers between your own accounts are never income or expense.
-- Partner withdrawals are never expenses.
-- Profit is never distributed automatically — a partner must approve it.
+- Owner drawings are never expenses.
+- Profit is never split or paid out automatically — net profit stays in
+  the business as retained earnings.
 
 ## Install (Windows 10/11)
 
-1. Download `ShopDesk-1.1.2-Portable.exe` from the Releases page (no install needed — just run it).
-2. First run shows the setup screen: enter your shop name, partners and
-   your own logins. Every user creates their own account — there is no
+1. Download `ShopDesk Owner-1.0.0-Portable.exe` from the Releases page (no install needed — just run it).
+2. First run shows the setup screen: enter your shop name, then create
+   your owner account. Every owner creates their own account — there is no
    demo data and no shared password.
 
 ## First steps after install
 
-1. On first run, choose **Set up my shop** and follow the three steps
-   (shop details, partners and profit shares, your logins).
+1. On first run, choose **Set up my shop** and follow the two steps
+   (shop details, your owner account).
 2. After setup, the app opens on the **Tutorial** page — eight steps that
    walk you through your first week. You can open it any time from the
    sidebar.
@@ -65,11 +67,10 @@ stays on your own computer.
 
 ## Updating without losing data
 
-Your database lives in Windows at
-`%APPDATA%\ShopDesk\shopdesk.db` — **not** inside the app folder. Installing
-a newer ShopDesk version over the old one, or replacing the .exe, never
-touches it. To be safe, take a backup from Backup & Restore before any
-update, and keep a copy on a USB stick.
+Your database lives in the app's user data folder — **not** inside the app
+folder. Installing a newer ShopDesk Owner version over the old one, or
+replacing the .exe, never touches it. To be safe, take a backup from
+Backup & Restore before any update, and keep a copy on a USB stick.
 
 ## Running the checks
 
@@ -94,18 +95,16 @@ works.
 
 ## Test results
 
-See [TEST_RESULTS.md](TEST_RESULTS.md): all 42 checks in scenarios A–I
-pass, typecheck is clean, the production build succeeds, and the app was
-launched headlessly and driven through setup, login and the dashboard
-(numbers verified against the test shop data).
+See [TEST_RESULTS.md](TEST_RESULTS.md) for the last full run of the
+checks above against the app.
 
 ## Project layout
 
 ```
 src/main/            Electron main process: DB, migrations, services, IPC
-src/main/services/   catalog, purchases, sales, finance, partners, closing,
+src/main/services/   catalog, purchases, sales, finance, owner, closing,
                      reports, backup, auth
-src/renderer/        React UI (17 pages) + shared UI kit
+src/renderer/        React UI + shared UI kit
 src/shared/          Zod schemas, types, money formatting (paisa)
 prisma/              schema + migrations
 resources/migrations/  shipped SQL applied at first launch and on upgrade

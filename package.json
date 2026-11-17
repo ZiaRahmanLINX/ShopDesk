@@ -1,8 +1,8 @@
 {
-  "name": "shopdesk",
-  "version": "1.1.2",
-  "description": "ShopDesk \u2014 Windows desktop shop management & partnership accounting (PKR)",
-  "author": "ShopDesk",
+  "name": "shopdesk-owner",
+  "version": "1.0.0",
+  "description": "ShopDesk Owner — Windows desktop shop management for a single owner (PKR)",
+  "author": "ShopDesk Owner",
   "license": "MIT",
   "private": true,
   "main": "dist-electron/main/main.js",

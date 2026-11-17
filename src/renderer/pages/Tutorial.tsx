@@ -6,7 +6,7 @@ import type { Page } from '../App';
 const STEPS: { title: string; text: string; page: Page; cta: string }[] = [
   {
     title: '1. Your shop is set up',
-    text: 'You already did this on the first screen: shop name, partners and logins. To change any of it later — shop name, address, phone, reserve percentage, or to add another user — open Settings.',
+    text: 'You already did this on the first screen: shop name and your owner login. To change any of it later — shop name, address or phone — open Settings.',
     page: 'settings',
     cta: 'Open Settings',
   },
@@ -18,7 +18,7 @@ const STEPS: { title: string; text: string; page: Page; cta: string }[] = [
   },
   {
     title: '3. Record your first purchase',
-    text: 'Open Purchases → New Purchase. Pick the supplier, add the items with their buying cost, and say how it was paid — full, part payment, or full credit. Also pick the funding source: business cash, partner capital, partner loan, or supplier credit. Buying stock is not an expense — stock is an asset, and only the cost of what you actually sell counts against profit.',
+    text: 'Open Purchases → New Purchase. Pick the supplier, add the items with their buying cost, and say how it was paid — full, part payment, or full credit. Also pick the funding source: business cash or supplier credit. Buying stock is not an expense — stock is an asset, and only the cost of what you actually sell counts against profit.',
     page: 'purchases',
     cta: 'Open Purchases',
   },
@@ -42,9 +42,9 @@ const STEPS: { title: string; text: string; page: Page; cta: string }[] = [
   },
   {
     title: '7. Close the month',
-    text: 'At the end of the month, open Partnership and close the month. Closing locks that month against silent changes — later corrections are recorded as adjustments, so the numbers can never be quietly rewritten. After closing, the profit can be distributed between partners (only after approval — never automatically).',
-    page: 'partnership',
-    cta: 'Open Partnership',
+    text: 'At the end of the month, open Month Close and close the month. Closing locks that month against silent changes — later corrections are recorded as adjustments, so the numbers can never be quietly rewritten. The month’s net profit stays in the business as retained earnings.',
+    page: 'monthclose',
+    cta: 'Open Month Close',
   },
   {
     title: '8. Back up your data',

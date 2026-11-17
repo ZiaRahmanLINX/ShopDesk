@@ -12,7 +12,7 @@ async function createWindow(): Promise<BrowserWindow> {
     height: 860,
     minWidth: 1024,
     minHeight: 640,
-    title: 'ShopDesk — Shop Management & Partnership Accounting',
+    title: 'ShopDesk Owner',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

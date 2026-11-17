@@ -59,8 +59,7 @@ export const createPurchaseSchema = z.object({
   transport: paisa.default(0),
   paidAmount: paisa.default(0),
   paymentMethod: z.enum(['CASH', 'BANK', 'EASYPAISA', 'JAZZCASH', 'CREDIT', 'SPLIT']),
-  fundingSource: z.enum(['BUSINESS_CASH', 'PARTNER_CAPITAL', 'PARTNER_LOAN', 'SUPPLIER_CREDIT']),
-  partnerId: z.string().optional().nullable(),
+  fundingSource: z.enum(['BUSINESS_CASH', 'SUPPLIER_CREDIT']),
   cashAccountId: z.string().optional().nullable(),
   note: z.string().max(500).optional().nullable(),
 });
@@ -84,8 +83,7 @@ export const paymentSchema = z.object({
   note: z.string().max(500).optional().nullable(),
 });
 
-export const partnerTxnSchema = z.object({
-  partnerId: z.string().min(1),
+export const ownerTxnSchema = z.object({
   amount: paisa.refine((v) => v > 0, 'Amount must be greater than 0'),
   note: z.string().max(500).optional().nullable(),
   cashAccountId: z.string().optional().nullable(),
@@ -102,41 +100,17 @@ export const settingsSchema = z.object({
   shopPhone: z.string().max(30).default(''),
   shopEmail: z.string().max(100).default(''),
   thankYouNote: z.string().max(300).default('Thank you for shopping with us!'),
-  reservePct: z.number().int().min(0).max(100).default(0),
   currency: z.string().default('PKR'),
   thermalWidth: z.enum(['58', '80']).default('80'),
 });
 
-export const setupSchema = z
-  .object({
-    shopName: z.string().min(1, 'Shop name is required').max(200),
-    shopAddress: z.string().max(500).default(''),
-    shopPhone: z.string().max(30).default(''),
-    reservePct: z.number().int().min(0).max(100).default(0),
-    partners: z
-      .array(
-        z.object({
-          name: z.string().min(1, 'Partner name is required').max(100),
-          type: z.enum(['CAPITAL', 'WORKING']),
-          profitSharePct: z.number().int().min(0).max(100),
-        }),
-      )
-      .min(1, 'Add at least one partner')
-      .max(2),
-    admin: z.object({
-      name: z.string().min(1, 'Your name is required').max(100),
-      username: z.string().min(1, 'Username is required').max(60),
-      password: z.string().min(6, 'Password must be at least 6 characters'),
-    }),
-    partnerUser: z
-      .object({
-        name: z.string().min(1, 'Partner name is required').max(100),
-        username: z.string().min(1, 'Username is required').max(60),
-        password: z.string().min(6, 'Password must be at least 6 characters'),
-      })
-      .nullable()
-      .optional(),
-  })
-  .refine((d) => d.partners.reduce((s, p) => s + p.profitSharePct, 0) === 100, {
-    message: 'Profit shares must add up to 100%',
-  });
+export const setupSchema = z.object({
+  shopName: z.string().min(1, 'Shop name is required').max(200),
+  shopAddress: z.string().max(500).default(''),
+  shopPhone: z.string().max(30).default(''),
+  owner: z.object({
+    name: z.string().min(1, 'Your name is required').max(100),
+    username: z.string().min(1, 'Username is required').max(60),
+    password: z.string().min(6, 'Password must be at least 6 characters'),
+  }),
+});

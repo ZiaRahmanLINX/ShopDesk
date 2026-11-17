@@ -66,7 +66,7 @@ export default function Expenses() {
           </table>
         )}
       </Card>
-      <p className="text-xs text-slate-400">Partner withdrawals are never expenses — record them under Partnership → Withdrawals.</p>
+      <p className="text-xs text-slate-400">Owner drawings are never expenses — record them on the Owner page.</p>
       {showForm && (
         <ExpenseForm cats={cats} accounts={accounts} onClose={() => setShowForm(false)} onSaved={() => { setShowForm(false); load(); toast.show('Expense recorded'); }} />
       )}

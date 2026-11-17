@@ -1,5 +1,19 @@
 // Renderer API client — typed wrappers over the secure preload bridge.
-import type { DashboardStats, MonthlyClosePreview } from '@shared/types';
+import type { DashboardStats } from '@shared/types';
+
+// Closing preview in the single-owner edition: P&L snapshot only.
+export interface OwnerClosePreview {
+  month: string; // YYYY-MM
+  netSales: number;
+  cogs: number;
+  grossProfit: number;
+  expenses: number;
+  netProfit: number;
+  closingInventoryValue: number;
+  customerOutstanding: number;
+  supplierOutstanding: number;
+  cashBalance: number;
+}
 
 declare global {
   interface Window {
@@ -13,13 +27,14 @@ export async function call<T>(channel: string, payload?: unknown): Promise<T> {
 
 export const api = {
   login: (username: string, password: string) =>
-    call<{ id: string; name: string; username: string; role: 'ADMIN' | 'WORKING_PARTNER' }>('auth:login', { username, password }),
+    call<{ id: string; name: string; username: string }>('auth:login', { username, password }),
   logout: () => call('auth:logout'),
   userCount: () => call<number>('auth:userCount'),
   setupStatus: () => call<{ needsSetup: boolean; demoMode: boolean }>('setup:status'),
   setupComplete: (d: unknown) => call('setup:complete', d),
   listUsers: () => call<Record<string, unknown>[]>('auth:listUsers'),
-  createUser: (d: unknown) => call('auth:createUser', d),
+  changePassword: (d: { userId: string; oldPassword: string; newPassword: string }) =>
+    call('auth:changePassword', d),
   settingsGet: () => call<Record<string, unknown>>('settings:get'),
   settingsSave: (d: unknown) => call('settings:save', d),
   dashboard: () => call<DashboardStats>('reports:dashboard'),
@@ -63,18 +78,14 @@ export const api = {
   expenses: (f?: unknown) => call<Record<string, unknown>[]>('finance:expenses', f),
   recordPayment: (d: unknown) => call('finance:recordPayment', d),
   dailyCashCount: (d: unknown) => call('finance:dailyCashCount', d),
-  partners: () => call<Record<string, unknown>[]>('partners:list'),
-  createPartner: (d: unknown) => call('partners:create', d),
-  updatePartnerShare: (partnerId: string, pct: number) => call('partners:updateShare', { partnerId, pct }),
-  addCapital: (d: unknown) => call('partners:addCapital', d),
-  addLoan: (d: unknown) => call('partners:addLoan', d),
-  repayLoan: (d: unknown) => call('partners:repayLoan', d),
-  addWithdrawal: (d: unknown) => call('partners:addWithdrawal', d),
-  partnerStatement: (id: string) => call<Record<string, unknown>>('partners:statement', { id }),
-  reserveBalance: () => call<number>('partners:reserveBalance'),
-  useReserve: (d: unknown) => call('partners:useReserve', d),
-  payDistribution: (d: unknown) => call('partners:payDistribution', d),
-  closePreview: (month: string) => call<MonthlyClosePreview>('closing:preview', { month }),
+  listCapital: () => call<Record<string, unknown>[]>('owner:listCapital'),
+  addCapital: (d: { amount: number; kind: 'INITIAL' | 'ADDITIONAL'; note?: string | null; cashAccountId?: string | null; method: string }) =>
+    call('owner:addCapital', d),
+  listDrawings: () => call<Record<string, unknown>[]>('owner:listDrawings'),
+  addDrawing: (d: { amount: number; note?: string | null; cashAccountId?: string | null; method: string }) =>
+    call('owner:addDrawing', d),
+  summary: () => call<{ totalCapital: number; totalDrawings: number }>('owner:summary'),
+  closePreview: (month: string) => call<OwnerClosePreview>('closing:preview', { month }),
   closeMonth: (month: string, notes?: string) => call('closing:close', { month, notes }),
   closings: () => call<Record<string, unknown>[]>('closing:list'),
   closing: (month: string) => call<Record<string, unknown>>('closing:get', { month }),

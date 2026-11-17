@@ -1,12 +1,12 @@
 # Build the real Windows installer (NSIS Setup.exe) + portable exe on a
 # Windows runner. NSIS cannot be built on Linux (no Wine in the sandbox),
 # so this workflow is the only way to produce ShopDesk-*-Setup.exe.
-# Runs on every push to main and on manual dispatch.
+# Runs on every push to main and single-owner and on manual dispatch.
 name: Build Windows installer
 
 on:
   push:
-    branches: [main]
+    branches: [main, single-owner]
   workflow_dispatch:
 
 jobs:

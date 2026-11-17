@@ -15,13 +15,9 @@ export const BASE_PRODUCT_CATEGORIES = ['Grocery', 'Beverages', 'Snacks', 'House
 export async function wipeAll(): Promise<void> {
   const db = getPrisma();
   await db.auditLog.deleteMany();
-  await db.profitDistribution.deleteMany();
   await db.monthlyClosing.deleteMany();
-  await db.businessReserve.deleteMany();
-  await db.partnerWithdrawal.deleteMany();
-  await db.partnerLoan.deleteMany();
-  await db.partnerCapital.deleteMany();
-  await db.partner.deleteMany();
+  await db.ownerDrawing.deleteMany();
+  await db.ownerCapital.deleteMany();
   await db.salePayment.deleteMany();
   await db.saleItem.deleteMany();
   await db.sale.deleteMany();

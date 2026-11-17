@@ -13,7 +13,8 @@ import Customers from './pages/Customers';
 import Udhaar from './pages/Udhaar';
 import Suppliers from './pages/Suppliers';
 import Cashbook from './pages/Cashbook';
-import Partnership from './pages/Partnership';
+import Owner from './pages/Owner';
+import MonthClose from './pages/MonthClose';
 import ProfitLoss from './pages/ProfitLoss';
 import Reports from './pages/Reports';
 import Backup from './pages/Backup';
@@ -24,9 +25,9 @@ import Tutorial from './pages/Tutorial';
 export type Page =
   | 'dashboard' | 'tutorial' | 'pos' | 'products' | 'inventory' | 'purchases' | 'sales'
   | 'invoices' | 'expenses' | 'customers' | 'udhaar' | 'suppliers' | 'cashbook'
-  | 'partnership' | 'pl' | 'reports' | 'backup' | 'settings';
+  | 'owner' | 'monthclose' | 'pl' | 'reports' | 'backup' | 'settings';
 
-const NAV: { id: Page; label: string; icon: string; adminOnly?: boolean }[] = [
+const NAV: { id: Page; label: string; icon: string }[] = [
   { id: 'dashboard', label: 'Dashboard', icon: '▦' },
   { id: 'tutorial', label: 'Tutorial', icon: '🎓' },
   { id: 'pos', label: 'Point of Sale', icon: '🧾' },
@@ -40,25 +41,25 @@ const NAV: { id: Page; label: string; icon: string; adminOnly?: boolean }[] = [
   { id: 'udhaar', label: 'Udhaar (Credit)', icon: '📒' },
   { id: 'suppliers', label: 'Suppliers', icon: '🏭' },
   { id: 'cashbook', label: 'Cashbook', icon: '🏦' },
-  { id: 'partnership', label: 'Partnership', icon: '🤝' },
+  { id: 'owner', label: 'Owner', icon: '👤' },
+  { id: 'monthclose', label: 'Month Close', icon: '🔒' },
   { id: 'pl', label: 'Profit & Loss', icon: '📈' },
   { id: 'reports', label: 'Reports', icon: '📊' },
-  { id: 'backup', label: 'Backup & Restore', icon: '💾', adminOnly: true },
-  { id: 'settings', label: 'Settings', icon: '⚙️', adminOnly: true },
+  { id: 'backup', label: 'Backup & Restore', icon: '💾' },
+  { id: 'settings', label: 'Settings', icon: '⚙️' },
 ];
 
 interface Session {
   id: string;
   name: string;
   username: string;
-  role: 'ADMIN' | 'WORKING_PARTNER';
 }
 
 export default function App() {
   const [user, setUser] = useState<Session | null>(null);
   const [page, setPage] = useState<Page>('dashboard');
   const [dark, setDark] = useState(false);
-  const [shopName, setShopName] = useState('ShopDesk');
+  const [shopName, setShopName] = useState('ShopDesk Owner');
   const [setup, setSetup] = useState<{ needsSetup: boolean; demoMode: boolean } | null>(null);
   const [dbError, setDbError] = useState<string | null>(null);
   const toast = useToast();
@@ -76,7 +77,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    api.settingsGet().then((s) => setShopName((s.shopName as string) || 'ShopDesk')).catch(() => undefined);
+    api.settingsGet().then((s) => setShopName((s.shopName as string) || 'ShopDesk Owner')).catch(() => undefined);
   }, [user]);
 
   if (!user) {
@@ -84,10 +85,10 @@ export default function App() {
       return (
         <div className="flex h-full items-center justify-center bg-slate-100 dark:bg-slate-900">
           <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-lg dark:border-slate-700 dark:bg-slate-800">
-            <h1 className="text-2xl font-bold text-blue-700 dark:text-blue-400">ShopDesk</h1>
+            <h1 className="text-2xl font-bold text-blue-700 dark:text-blue-400">ShopDesk Owner</h1>
             <p className="mt-3 text-sm text-slate-600 dark:text-slate-300">
-              The shop database could not be set up. Please close ShopDesk and open it again. If this keeps
-              happening, reinstall ShopDesk — reinstalling does not delete your shop data.
+              The shop database could not be set up. Please close ShopDesk Owner and open it again. If this keeps
+              happening, reinstall ShopDesk Owner — reinstalling does not delete your shop data.
             </p>
             <p className="mt-3 text-xs text-slate-400">{dbError}</p>
           </div>
@@ -97,7 +98,7 @@ export default function App() {
     if (setup === null) {
       return (
         <div className="flex h-full items-center justify-center bg-slate-100 dark:bg-slate-900">
-          <p className="text-sm text-slate-400">Loading ShopDesk…</p>
+          <p className="text-sm text-slate-400">Loading ShopDesk Owner…</p>
         </div>
       );
     }
@@ -114,14 +115,14 @@ export default function App() {
     return <Login onLogin={setUser} />;
   }
 
-  const visibleNav = NAV.filter((n) => !n.adminOnly || user.role === 'ADMIN');
+  const visibleNav = NAV;
 
   return (
     <div className="flex h-full bg-slate-100 text-slate-800 dark:bg-slate-900 dark:text-slate-100">
       {/* Sidebar */}
       <aside className="flex w-60 shrink-0 flex-col border-r border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-800">
         <div className="border-b border-slate-100 px-4 py-4 dark:border-slate-700">
-          <p className="text-lg font-bold text-blue-700 dark:text-blue-400">ShopDesk</p>
+          <p className="text-lg font-bold text-blue-700 dark:text-blue-400">ShopDesk Owner</p>
           <p className="truncate text-xs text-slate-500 dark:text-slate-400">{shopName}</p>
         </div>
         <nav className="flex-1 overflow-y-auto p-2">
@@ -142,7 +143,7 @@ export default function App() {
         </nav>
         <div className="border-t border-slate-100 p-3 dark:border-slate-700">
           <p className="text-xs font-medium text-slate-600 dark:text-slate-300">{user.name}</p>
-          <p className="text-[11px] text-slate-400">{user.role === 'ADMIN' ? 'Admin / Owner' : 'Working Partner'}</p>
+          <p className="text-[11px] text-slate-400">Owner</p>
           <div className="mt-2 flex gap-2">
             <Btn variant="secondary" className="flex-1 !px-2 !py-1 text-xs" onClick={() => setDark(!dark)}>
               {dark ? '☀️ Light' : '🌙 Dark'}
@@ -169,7 +170,8 @@ export default function App() {
         {page === 'udhaar' && <Udhaar />}
         {page === 'suppliers' && <Suppliers />}
         {page === 'cashbook' && <Cashbook />}
-        {page === 'partnership' && <Partnership isAdmin={user.role === 'ADMIN'} />}
+        {page === 'owner' && <Owner />}
+        {page === 'monthclose' && <MonthClose />}
         {page === 'pl' && <ProfitLoss />}
         {page === 'reports' && <Reports />}
         {page === 'backup' && <Backup />}
@@ -197,7 +199,7 @@ function Login({ onLogin }: { onLogin: (u: Session) => void }) {
       const msg = e instanceof Error ? e.message : 'Login failed';
       setErr(
         msg.includes('does not exist in the current database')
-          ? 'The shop database was not set up correctly. Please restart ShopDesk — if this keeps happening, reinstall it.'
+          ? 'The shop database was not set up correctly. Please restart ShopDesk Owner — if this keeps happening, reinstall it.'
           : msg,
       );
     } finally {
@@ -208,8 +210,8 @@ function Login({ onLogin }: { onLogin: (u: Session) => void }) {
   return (
     <div className="flex h-full items-center justify-center bg-slate-100 dark:bg-slate-900">
       <form onSubmit={submit} className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-lg dark:border-slate-700 dark:bg-slate-800">
-        <h1 className="text-2xl font-bold text-blue-700 dark:text-blue-400">ShopDesk</h1>
-        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Shop Management & Partnership Accounting</p>
+        <h1 className="text-2xl font-bold text-blue-700 dark:text-blue-400">ShopDesk Owner</h1>
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">Single-owner shop management (PKR)</p>
         <div className="mt-5 space-y-3">
           <Field label="Username">
             <Input value={username} onChange={(e) => setUsername(e.target.value)} autoFocus />

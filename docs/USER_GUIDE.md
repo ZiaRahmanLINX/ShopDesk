@@ -1,24 +1,23 @@
-# ShopDesk User Guide
+# ShopDesk Owner User Guide
 
 Plain-language guide for the shop owner. No technical knowledge needed.
 All amounts are in Pakistani Rupees (Rs).
 
 ## 1. Getting started
 
-**First run — set up your shop.** The first time you open ShopDesk you
-will see the setup screen. Enter your shop name, address and phone, add
-one or two partners with their profit shares (they must add up to 100%),
-then create your logins: an admin login with full access, and optionally
-a second login for the working partner. Every user creates their own
-account — there is no demo data and no shared password.
+**First run — set up your shop.** The first time you open ShopDesk Owner
+you will see the setup screen, in two steps:
+
+1. **Your shop** — shop name, address and phone.
+2. **Your owner account** — your name, a username and a password (6+
+   characters). This is the only login the app has, and it has full access
+   to everything.
+
+There is no demo data and there are no demo or default logins — the owner
+account you create during setup is the only way in. Keep its password
+safe; there is no password reset inside the app (see section 12).
 
 **Sign in.** Use the username and password you created during setup.
-
-- **Admin** — full access to everything, including Partnership, Backup and
-  Settings.
-- **Working partner** — can sell, manage stock and purchases, record
-  expenses and customers, and see daily reports. Cannot change partners,
-  close months, or restore backups.
 
 ## 2. Daily selling (Point of Sale)
 
@@ -49,13 +48,8 @@ in the audit log. Refunds cannot be hidden or deleted.
    - **Part payment** — pay some now; the rest stays as an amount owed to
      the supplier.
    - **Full credit** — pay nothing now; the whole amount is owed.
-3. Choose the **funding source** — where the money came from. This matters
-   for the partnership accounts:
+3. Choose the **funding source** — where the money came from:
    - *Business cash* — paid from the shop's own money.
-   - *Partner capital* — a partner put in more money (increases their
-     capital).
-   - *Partner loan* — a partner lent money temporarily (the shop owes it
-     back; it is **not** capital).
    - *Supplier credit* — the supplier is owed the money.
 4. Buying stock does **not** reduce your profit. Stock is an asset; profit
    is only reduced when that stock is actually sold.
@@ -82,6 +76,9 @@ electricity, water, internet, transport, packaging, repairs, cleaning,
 tea, wages, other). Choose the account the money came out of. Expenses
 reduce the month's profit — purchases do not.
 
+**Owner drawings are never expenses.** Money you take out for personal
+use is recorded on the **Owner** page, not in Expenses.
+
 ## 6. Customers, Udhaar and Suppliers
 
 - **Customers** — add customers, see what each one owes, take a payment
@@ -102,32 +99,27 @@ reduce the month's profit — purchases do not.
   difference is recorded as an overage or shortage. Never adjust the cash
   balance without a count.
 
-## 8. Partnership and monthly closing
+## 8. Owner and monthly closing
 
-### Partnership
+### Owner
 
-- **Capital** — money a partner invested. It belongs to the partner and is
-  shown separately from loans.
-- **Loans** — money a partner lent temporarily. The shop owes it back.
-  Repaying a loan reduces the loan balance; it is not an expense.
-- **Withdrawals** — money a partner takes out for personal use. A
-  withdrawal is **never** an expense and never reduces profit; it reduces
-  that partner's share at distribution time.
-- **Reserve** — money kept in the business before profit is shared (for
-  example 20% of the month's profit). The reserve stays business money and
-  can be used later for urgent stock or repairs.
+- **Capital** — money you put into the business. Record it as *initial*
+  capital when you start, or *additional* capital any time you top it up.
+  It increases business cash.
+- **Drawings** — money you take out for personal use. A drawing is
+  **never** an expense and never reduces profit; it reduces cash only.
+- The **Owner** page shows your totals: capital in, drawings out, and
+  the net owner balance.
 
 ### Monthly closing (end of every month)
 
-1. Open **Partnership → Close Month**. The app shows a preview: total
-   sales, cost of goods sold, gross profit, expenses, net profit, the
-   reserve amount, and each partner's share.
+1. Open **Month Close**. The app shows a preview: total sales, cost of
+   goods sold, gross profit, expenses and net profit, plus closing
+   inventory, customer credit, supplier payables and cash balance.
 2. Check the numbers. If they look right, confirm the close. The month is
    then **locked** — no one can quietly change a sale, purchase or expense
    in that month afterwards.
-3. The two distribution rows are created (one per partner) with status
-   Pending. Pay each partner from here; the payment is recorded against
-   their share.
+3. The month's net profit stays in the business as retained earnings.
 4. If a mistake is found after closing, do **not** edit the old entry.
    Record a correction entry (adjustment or reversal) so the history stays
    honest. The audit log keeps every change.
@@ -144,10 +136,10 @@ forward.
 - **Verify** checks a backup file is not corrupt before you rely on it.
 - **Restore** replaces the current database with a backup. The app first
   saves a copy of the current database, so a mistaken restore can be
-  undone. Only the admin can restore.
+  undone.
 
-**Your data file** lives at `%APPDATA%\ShopDesk\shopdesk.db` on the
-computer. Updating ShopDesk never touches it, but keep a USB backup anyway.
+**Your data file** lives in the app's user data folder on the computer.
+Updating ShopDesk Owner never touches it, but keep a USB backup anyway.
 
 ## 10. Reports
 
@@ -157,9 +149,9 @@ CSV from the same page.
 
 ## 11. Settings
 
-- **Shop** — shop name, address, phone, thank-you note on invoices, and
-  the reserve percentage used at month closing.
-- **Users** — add users, change passwords, set roles.
+- **Shop** — shop name, address, phone, thank-you note on invoices.
+- **Owner account** — your name and username, and change your password
+  (you need the current password).
 - **Invoice** — paper size defaults (thermal 58mm / 80mm / A4) and
   branding.
 - **Backup** — automatic backup on/off and retention.
@@ -176,10 +168,9 @@ CSV from the same page.
 - **"No active account"** — the payment method chosen has no account set
   up. Add it in **Cashbook**.
 - **The app will not open** — restart the computer and try again. If it
-  still will not open, copy `%APPDATA%\ShopDesk\shopdesk.db` somewhere safe
-  first, then reinstall ShopDesk — your data file is separate from the app
+  still will not open, take a backup copy of your data file first, then
+  reinstall ShopDesk Owner — your data file is separate from the app
   and survives a reinstall.
 - **Lost password** — there is no password reset inside the app by design.
-  The admin can change any user's password in **Settings → Users**. If the
-  admin password itself is lost, the database must be reset by someone
+  If the owner password is lost, the database must be reset by someone
   technical (all shop data will need to be re-entered).

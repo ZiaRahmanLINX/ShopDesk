@@ -77,10 +77,12 @@ export async function createProduct(input: unknown, userId: string | null) {
   const p = await db.product.create({ data: { ...data, qty: data.qty } });
   if (data.qty > 0) {
     // Opening stock becomes a lot at the purchase price so COGS is correct.
+    // No purchase behind it, so purchaseId stays null (fake ids like
+    // 'OPENING' violate the foreign key and crash product creation).
     await db.purchaseLot.create({
       data: {
         productId: p.id,
-        purchaseId: 'OPENING',
+        purchaseId: null,
         qtyRemaining: data.qty,
         unitCost: data.purchasePrice,
       },
@@ -156,10 +158,12 @@ export async function adjustStock(
     if (newQty < 0) throw new Error(`Stock would go negative (${p.qty} on hand)`);
     await tx.product.update({ where: { id: productId }, data: { qty: newQty } });
     if (qtyChange > 0) {
+      // Adjustment stock has no purchase behind it (purchaseId stays null —
+      // a fake id violates the foreign key).
       await tx.purchaseLot.create({
         data: {
           productId,
-          purchaseId: 'ADJUSTMENT',
+          purchaseId: null,
           qtyRemaining: qtyChange,
           unitCost: p.purchasePrice,
         },

@@ -1,4 +1,4 @@
-// First-run setup: a clean shop setup with the user's own logins.
+// First-run setup: a clean shop setup with the owner's own login.
 // (The old demo-data path was removed in v1.1.2 — every user creates
 // their own account. The `demo` flag in meta/setup status is kept only so
 // databases set up with demo data before v1.1.2 still report correctly.)
@@ -7,7 +7,6 @@
 import { getPrisma, getSetting, setSetting, DEFAULT_SETTINGS } from './db';
 import { wipeAll, BASE_EXPENSE_CATEGORIES, BASE_PRODUCT_CATEGORIES } from './seed';
 import { createUser } from './services/auth';
-import { createPartner } from './services/partners';
 import { setupSchema } from '../shared/schemas';
 
 export interface SetupStatus {
@@ -43,7 +42,7 @@ async function createBaseStructure(): Promise<void> {
   }
 }
 
-/** Clean setup from the wizard: shop, partners, logins. Nothing demo. */
+/** Clean setup from the wizard: shop + the single owner login. Nothing demo. */
 export async function completeSetup(input: unknown): Promise<{ ok: true }> {
   const data = setupSchema.parse(input);
   const meta = await getSetting<{ setupCompleted?: boolean } | null>('meta', null);
@@ -61,26 +60,11 @@ export async function completeSetup(input: unknown): Promise<{ ok: true }> {
     shopName: data.shopName,
     shopAddress: data.shopAddress || '',
     shopPhone: data.shopPhone || '',
-    reservePct: data.reservePct,
   });
-  for (const p of data.partners) {
-    await createPartner({ name: p.name, type: p.type, profitSharePct: p.profitSharePct }, null);
-  }
   await createUser(
-    { name: data.admin.name, username: data.admin.username, password: data.admin.password, role: 'ADMIN' },
+    { name: data.owner.name, username: data.owner.username, password: data.owner.password },
     null,
   );
-  if (data.partnerUser) {
-    await createUser(
-      {
-        name: data.partnerUser.name,
-        username: data.partnerUser.username,
-        password: data.partnerUser.password,
-        role: 'WORKING_PARTNER',
-      },
-      null,
-    );
-  }
   await setSetting('meta', { setupCompleted: true, demo: false });
   return { ok: true };
 }

@@ -28,6 +28,6 @@ jobs:
         with:
           name: ShopDesk-Windows
           path: |
-            release/ShopDesk-*-Setup.exe
-            release/ShopDesk-*-Portable.exe
+            release/ShopDesk Owner-*-Setup.exe
+            release/ShopDesk Owner-*-Portable.exe
           retention-days: 30
